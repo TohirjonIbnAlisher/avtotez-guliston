@@ -1,0 +1,4 @@
+topic,text,option_1,option_2,option_3,option_4,correct_option_number,image_url,explanation,is_tricky,is_number_related
+Tezlik va masofa,"NAMUNA: Aholi punktida ruxsat etilgan eng yuqori tezlik qancha? (raqamni rasmiy manbadan tekshiring)","60 km/soat","70 km/soat","90 km/soat","100 km/soat",1,,"Bu misol qator — haqiqiy qiymatni rasmiy YHQ matnidan tasdiqlang",FALSE,TRUE
+Ustunlik huquqi,"NAMUNA: Svetofor ishlamayotgan chorrahada harakat tartibini kim belgilaydi?","Yo'l-transport nazorati xodimi","Ustunlik belgilari","Xodim bo'lsa xodim, bo'lmasa belgilar","Haydovchining o'zi",3,,,FALSE,FALSE
+Yo'l belgilari,"NAMUNA: Belgining nomi va ma'nosi (rasm image_url ustuniga qo'shiladi)","Variant A","Variant B","Variant C","Variant D",1,"/assets/signs/namuna.png",,TRUE,FALSE
