@@ -1,36 +1,39 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { LogoMark } from '../../shared/logo-mark/logo-mark';
 import { LanguageService, LOCALE_OPTIONS } from '../../core/services/language.service';
+import { TranslateService } from '../../core/services/translate.service';
+import { AuthService } from '../../core/services/auth.service';
+import { ProgressService } from '../../core/services/progress.service';
+import { QuestionsStore } from '../../core/services/questions-store.service';
+import { ThemeService } from '../../core/services/theme.service';
+import { StreakService } from '../../core/services/streak.service';
 
 interface NavPill {
-  label: string;
+  labelKey: string;
   route: string;
   active?: boolean;
 }
 
 interface QuickAction {
   icon: string;
-  label: string;
+  labelKey: string;
   route: string;
   iconBg: string;
-}
-
-interface PrimaryCard {
-  icon: string;
-  title: string;
-  subtitle: string;
-  gradient: string;
-  route: string;
 }
 
 interface MenuTile {
   icon: string;
-  label: string;
+  labelKey: string;
   iconBg: string;
+  route?: string;
   progress?: number;
-  badge?: string;
+  hasBadge?: boolean;
 }
+
+const PRIMARY_CARD_ICONS = ['📖', '▶️', '🎫'];
+const PRIMARY_CARD_GRADIENTS = ['from-blue-600 to-blue-700', 'from-brand-500 to-brand-700', 'from-amber-500 to-orange-600'];
+const PRIMARY_CARD_ROUTES = ['/tests/topics', '/tests', '/tests/tickets'];
 
 @Component({
   selector: 'app-dashboard',
@@ -38,68 +41,85 @@ interface MenuTile {
   templateUrl: './dashboard.html',
 })
 export class Dashboard {
+  private readonly router = inject(Router);
   protected readonly languageService = inject(LanguageService);
+  protected readonly translate = inject(TranslateService);
+  protected readonly auth = inject(AuthService);
+  protected readonly progress = inject(ProgressService);
+  protected readonly questionsStore = inject(QuestionsStore);
+  protected readonly theme = inject(ThemeService);
+  private readonly streak = inject(StreakService);
   protected readonly localeOptions = LOCALE_OPTIONS;
 
-  // TODO: backend'da /auth va /users tayyor bo'lgach haqiqiy foydalanuvchi ma'lumotlari bilan almashtiriladi
-  readonly userName = 'Foydalanuvchi';
-  readonly userInitial = 'F';
+  constructor() {
+    this.streak.recordToday();
+  }
+
+  protected readonly userName = computed(
+    () => this.auth.currentUser()?.fullName || this.auth.currentUser()?.phone || this.translate.t('dashboard.userNamePlaceholder'),
+  );
+  protected readonly userInitial = computed(() => this.userName().charAt(0).toUpperCase() || 'F');
+  protected readonly userRole = computed(() => this.auth.currentUser()?.role ?? 'user');
+  protected readonly roleLabel = computed(() => this.translate.t(`dashboard.role.${this.userRole()}`));
 
   readonly navPills: NavPill[] = [
-    { label: 'Bosh sahifa', route: '/dashboard', active: true },
-    { label: 'Mavzular', route: '/tests' },
-    { label: 'Biletlar', route: '/tests' },
-    { label: 'Testlar', route: '/tests' },
+    { labelKey: 'dashboard.nav.home', route: '/dashboard', active: true },
+    { labelKey: 'dashboard.nav.topics', route: '/tests/topics' },
+    { labelKey: 'dashboard.nav.tickets', route: '/tests/tickets' },
+    { labelKey: 'dashboard.nav.tests', route: '/tests/all' },
   ];
 
-  // TODO: haqiqiy progress /users statistikasi bilan almashtiriladi
-  readonly progressPercent = 63;
-  readonly correctCount = 412;
-  readonly wrongCount = 28;
-  readonly skippedCount = 96;
-  readonly streakDays = 5;
+  protected readonly totalQuestions = computed(() => this.questionsStore.questions().length);
+  protected readonly correctCount = computed(() => this.progress.correctIds().size);
+  protected readonly wrongCount = computed(() => Object.keys(this.progress.mistakes()).length);
+  protected readonly skippedCount = computed(() =>
+    Math.max(0, this.totalQuestions() - this.correctCount() - this.wrongCount()),
+  );
+  protected readonly progressPercent = computed(() =>
+    this.totalQuestions() ? Math.round((this.correctCount() / this.totalQuestions()) * 100) : 0,
+  );
+
+  protected readonly streakDays = this.streak.streakDays;
 
   readonly quickActions: QuickAction[] = [
-    { icon: '📋', label: 'Barcha testlar', route: '/tests', iconBg: 'bg-brand-500/15 text-brand-400' },
-    { icon: '🔁', label: 'Xatolarni ko\'rib chiqish', route: '/tests', iconBg: 'bg-rose-500/15 text-rose-400' },
+    { icon: '📋', labelKey: 'dashboard.quickActions.allTests', route: '/tests/all', iconBg: 'bg-brand-500/15 text-brand-400' },
+    { icon: '🔁', labelKey: 'dashboard.quickActions.reviewMistakes', route: '/tests/mistakes', iconBg: 'bg-rose-500/15 text-rose-400' },
   ];
 
-  readonly primaryCards: PrimaryCard[] = [
-    {
-      icon: '📖',
-      title: 'Mavzu bo\'yicha mashq',
-      subtitle: 'Har bir mavzuni alohida mustahkamlang',
-      gradient: 'from-blue-600 to-blue-700',
-      route: '/tests',
-    },
-    {
-      icon: '▶️',
-      title: 'Test yechish',
-      subtitle: '20 ta tasodifiy savol bilan sinab ko\'ring',
-      gradient: 'from-brand-500 to-brand-700',
-      route: '/tests',
-    },
-    {
-      icon: '🎫',
-      title: 'Bilet bo\'yicha',
-      subtitle: 'Rasmiy 61 bilet tartibida mashq qiling',
-      gradient: 'from-amber-500 to-orange-600',
-      route: '/tests',
-    },
-  ];
+  protected readonly primaryCards = computed(() =>
+    this.translate
+      .array<{ title: string; subtitle: string }>('dashboard.primaryCards')
+      .map((card, i) => ({
+        ...card,
+        icon: PRIMARY_CARD_ICONS[i],
+        gradient: PRIMARY_CARD_GRADIENTS[i],
+        route: PRIMARY_CARD_ROUTES[i],
+      })),
+  );
 
   readonly menuTiles: MenuTile[] = [
-    { icon: '📖', label: 'Mavzular', iconBg: 'bg-purple-500/15 text-purple-400', progress: 40 },
-    { icon: '🎫', label: 'Biletlar', iconBg: 'bg-amber-500/15 text-amber-400', progress: 56 },
-    { icon: '🔀', label: 'Random testlar', iconBg: 'bg-blue-500/15 text-blue-400' },
-    { icon: '⚠️', label: 'Xatolarni tahlil qilish', iconBg: 'bg-red-500/15 text-red-400' },
-    { icon: '📊', label: 'Progress kuzatuvi', iconBg: 'bg-emerald-500/15 text-emerald-400' },
-    { icon: '🎯', label: "Chalg'ituvchi savollar", iconBg: 'bg-rose-500/15 text-rose-400' },
-    { icon: '🔢', label: 'Raqamli savollar', iconBg: 'bg-indigo-500/15 text-indigo-400' },
-    { icon: '📝', label: 'Shpargalkalar', iconBg: 'bg-orange-500/15 text-orange-400' },
-    { icon: '📘', label: "Yo'l harakati qoidalari", iconBg: 'bg-brand-500/15 text-brand-400' },
-    { icon: '🔖', label: 'Saqlangan savollar', iconBg: 'bg-yellow-500/15 text-yellow-400' },
-    { icon: '🎥', label: 'Video darslar', iconBg: 'bg-teal-500/15 text-teal-400', badge: 'Tez orada' },
-    { icon: '🏆', label: "O'quvchilar musobaqasi", iconBg: 'bg-pink-500/15 text-pink-400', badge: 'Tez orada' },
+    { icon: '📖', labelKey: 'dashboard.nav.topics', iconBg: 'bg-purple-500/15 text-purple-400', route: '/tests/topics' },
+    { icon: '🎫', labelKey: 'dashboard.nav.tickets', iconBg: 'bg-amber-500/15 text-amber-400', route: '/tests/tickets' },
+    { icon: '🔀', labelKey: 'dashboard.menu.randomTests', iconBg: 'bg-blue-500/15 text-blue-400', route: '/tests/random' },
+    { icon: '⚠️', labelKey: 'dashboard.menu.errorAnalysis', iconBg: 'bg-red-500/15 text-red-400', route: '/tests/mistakes' },
+    { icon: '📊', labelKey: 'dashboard.menu.progressTracking', iconBg: 'bg-emerald-500/15 text-emerald-400', route: '/progress' },
+    { icon: '🎯', labelKey: 'dashboard.menu.trickyQuestions', iconBg: 'bg-rose-500/15 text-rose-400' },
+    { icon: '🔢', labelKey: 'dashboard.menu.numberQuestions', iconBg: 'bg-indigo-500/15 text-indigo-400' },
+    { icon: '📝', labelKey: 'dashboard.menu.cheatSheets', iconBg: 'bg-orange-500/15 text-orange-400' },
+    { icon: '📘', labelKey: 'dashboard.menu.trafficRules', iconBg: 'bg-brand-500/15 text-brand-400' },
+    { icon: '🔖', labelKey: 'dashboard.menu.savedQuestions', iconBg: 'bg-yellow-500/15 text-yellow-400', route: '/tests/saved' },
+    { icon: '🎥', labelKey: 'landing.footer.videoLessons', iconBg: 'bg-teal-500/15 text-teal-400', hasBadge: true },
+    { icon: '🏆', labelKey: 'dashboard.menu.competition', iconBg: 'bg-pink-500/15 text-pink-400', hasBadge: true },
   ];
+
+  resetProgress(): void {
+    if (confirm(this.translate.t('dashboard.progress.resetConfirm'))) {
+      this.progress.resetProgress();
+    }
+  }
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigateByUrl('/');
+  }
 }

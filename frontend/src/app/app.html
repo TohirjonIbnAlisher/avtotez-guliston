@@ -1,5 +1,5 @@
 @if (!isDashboardRoute()) {
-  <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
+  <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
     <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
       <a
         routerLink="/"
@@ -8,46 +8,65 @@
         class="flex items-center gap-2.5"
       >
         <app-logo-mark />
-        <span class="text-lg font-extrabold tracking-tight text-slate-900">Avtotez Guliston</span>
+        <span class="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">{{ translate.t('common.brand') }}</span>
       </a>
 
       <nav class="hidden items-center gap-1 lg:flex">
-        @for (link of navLinks; track link.label) {
+        @for (link of navLinks; track link.labelKey) {
           <a
             [routerLink]="link.route"
             [fragment]="link.fragment"
-            class="rounded-lg px-3 py-2 text-base font-semibold text-slate-700 transition hover:bg-slate-100"
+            class="rounded-lg px-3 py-2 text-base font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            {{ link.label }}
+            {{ translate.t(link.labelKey) }}
           </a>
         }
       </nav>
 
       <div class="hidden items-center gap-3 lg:flex">
-        <div class="flex items-center gap-0.5 rounded-lg bg-slate-100 p-1">
+        <div class="flex items-center gap-0.5 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
           @for (option of localeOptions; track option.code) {
             <button
               type="button"
               (click)="languageService.setLocale(option.code)"
               class="rounded-md px-2.5 py-1.5 text-sm font-semibold transition"
               [class.bg-white]="languageService.locale() === option.code"
+              [class.dark:bg-slate-700]="languageService.locale() === option.code"
               [class.text-brand-700]="languageService.locale() === option.code"
+              [class.dark:text-brand-400]="languageService.locale() === option.code"
               [class.shadow-sm]="languageService.locale() === option.code"
               [class.text-slate-500]="languageService.locale() !== option.code"
+              [class.dark:text-slate-400]="languageService.locale() !== option.code"
             >
               {{ option.label }}
             </button>
           }
         </div>
-        <a routerLink="/login" class="btn-dark px-5 py-2.5 text-base">Kirish</a>
+
+        @if (isAppRoute()) {
+          <button
+            type="button"
+            (click)="theme.toggle()"
+            [attr.aria-label]="translate.t('dashboard.theme.toggleAria')"
+            class="flex h-9 w-9 items-center justify-center rounded-lg text-lg text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          >
+            {{ theme.mode() === 'dark' ? '☀️' : '🌙' }}
+          </button>
+        }
+
+        @if (auth.isAuthenticated()) {
+          <a routerLink="/dashboard" class="btn-dark px-5 py-2.5 text-base">{{ translate.t('common.cabinet') }}</a>
+        } @else {
+          <a routerLink="/login" class="btn-dark px-5 py-2.5 text-base">{{ translate.t('common.login') }}</a>
+        }
       </div>
 
       <button
         type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 lg:hidden"
+        class="flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 lg:hidden"
         (click)="toggleMobileMenu()"
         [attr.aria-expanded]="mobileMenuOpen()"
-        aria-label="Menyu"
+        [attr.aria-label]="translate.t('common.menu')"
       >
         @if (mobileMenuOpen()) {
           <span class="text-2xl">✕</span>
@@ -58,36 +77,61 @@
     </div>
 
     @if (mobileMenuOpen()) {
-      <nav class="flex flex-col gap-1 border-t border-slate-200 bg-white px-6 py-4 lg:hidden">
-        @for (link of navLinks; track link.label) {
+      <nav class="flex flex-col gap-1 border-t border-slate-200 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900 lg:hidden">
+        @for (link of navLinks; track link.labelKey) {
           <a
             [routerLink]="link.route"
             [fragment]="link.fragment"
             (click)="closeMobileMenu()"
-            class="rounded-lg px-3 py-2.5 text-base font-semibold text-slate-700 transition hover:bg-slate-100"
+            class="rounded-lg px-3 py-2.5 text-base font-semibold text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            {{ link.label }}
+            {{ translate.t(link.labelKey) }}
           </a>
         }
-        <a
-          routerLink="/login"
-          (click)="closeMobileMenu()"
-          class="mt-1 rounded-lg bg-slate-900 px-3 py-2.5 text-center text-base font-semibold text-white"
-        >
-          Kirish
-        </a>
-        <div class="mt-2 flex items-center gap-0.5 rounded-lg bg-slate-100 p-1">
-          @for (option of localeOptions; track option.code) {
+        @if (auth.isAuthenticated()) {
+          <a
+            routerLink="/dashboard"
+            (click)="closeMobileMenu()"
+            class="mt-1 rounded-lg bg-slate-900 px-3 py-2.5 text-center text-base font-semibold text-white"
+          >
+            {{ translate.t('common.cabinet') }}
+          </a>
+        } @else {
+          <a
+            routerLink="/login"
+            (click)="closeMobileMenu()"
+            class="mt-1 rounded-lg bg-slate-900 px-3 py-2.5 text-center text-base font-semibold text-white"
+          >
+            {{ translate.t('common.login') }}
+          </a>
+        }
+        <div class="mt-2 flex items-center gap-2">
+          <div class="flex flex-1 items-center gap-0.5 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+            @for (option of localeOptions; track option.code) {
+              <button
+                type="button"
+                (click)="languageService.setLocale(option.code)"
+                class="flex-1 rounded-md px-2.5 py-1.5 text-sm font-semibold transition"
+                [class.bg-white]="languageService.locale() === option.code"
+                [class.dark:bg-slate-700]="languageService.locale() === option.code"
+                [class.text-brand-700]="languageService.locale() === option.code"
+                [class.dark:text-brand-400]="languageService.locale() === option.code"
+                [class.shadow-sm]="languageService.locale() === option.code"
+                [class.text-slate-500]="languageService.locale() !== option.code"
+                [class.dark:text-slate-400]="languageService.locale() !== option.code"
+              >
+                {{ option.label }}
+              </button>
+            }
+          </div>
+          @if (isAppRoute()) {
             <button
               type="button"
-              (click)="languageService.setLocale(option.code)"
-              class="flex-1 rounded-md px-2.5 py-1.5 text-sm font-semibold transition"
-              [class.bg-white]="languageService.locale() === option.code"
-              [class.text-brand-700]="languageService.locale() === option.code"
-              [class.shadow-sm]="languageService.locale() === option.code"
-              [class.text-slate-500]="languageService.locale() !== option.code"
+              (click)="theme.toggle()"
+              [attr.aria-label]="translate.t('dashboard.theme.toggleAria')"
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-500 transition dark:bg-slate-800 dark:text-slate-400"
             >
-              {{ option.label }}
+              {{ theme.mode() === 'dark' ? '☀️' : '🌙' }}
             </button>
           }
         </div>

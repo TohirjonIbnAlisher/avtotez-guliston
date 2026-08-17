@@ -6,6 +6,7 @@ import { Topic } from '../topics/entities/topic.entity';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { DEFAULT_LOCALE, Locale } from './locale';
+import { resolveQuestion, ResolvedQuestion } from './resolve-question';
 
 interface FindQuestionsOptions {
   topicId?: string;
@@ -13,18 +14,7 @@ interface FindQuestionsOptions {
   isNumberRelated?: boolean;
 }
 
-export interface ResolvedQuestion {
-  id: string;
-  sourceId: number | null;
-  text: string;
-  options: string[];
-  correctOptionIndex: number;
-  imageUrl: string | null;
-  explanation: string | null;
-  isTricky: boolean;
-  isNumberRelated: boolean;
-  topic: Topic | null;
-}
+export type { ResolvedQuestion };
 
 @Injectable()
 export class QuestionsService {
@@ -123,20 +113,7 @@ export class QuestionsService {
   }
 
   private resolve(question: Question, lang: Locale): ResolvedQuestion {
-    const fallback = DEFAULT_LOCALE;
-    return {
-      id: question.id,
-      sourceId: question.sourceId,
-      text: question.text[lang] ?? question.text[fallback],
-      options: question.options[lang] ?? question.options[fallback],
-      correctOptionIndex: question.correctOptionIndex,
-      imageUrl: question.imageUrl,
-      explanation:
-        question.explanation?.[lang] ?? question.explanation?.[fallback] ?? null,
-      isTricky: question.isTricky,
-      isNumberRelated: question.isNumberRelated,
-      topic: question.topic,
-    };
+    return resolveQuestion(question, lang);
   }
 
   private async getTopicOrThrow(topicId: string): Promise<Topic> {

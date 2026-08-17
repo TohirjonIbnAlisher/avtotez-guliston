@@ -4,9 +4,12 @@ import { NavigationEnd, Router, RouterOutlet, RouterLink } from '@angular/router
 import { filter, map } from 'rxjs';
 import { LogoMark } from './shared/logo-mark/logo-mark';
 import { LanguageService, LOCALE_OPTIONS } from './core/services/language.service';
+import { TranslateService } from './core/services/translate.service';
+import { ThemeService } from './core/services/theme.service';
+import { AuthService } from './core/services/auth.service';
 
 interface NavLink {
-  label: string;
+  labelKey: string;
   fragment?: string;
   route: string;
 }
@@ -19,6 +22,9 @@ interface NavLink {
 export class App {
   private readonly router = inject(Router);
   protected readonly languageService = inject(LanguageService);
+  protected readonly translate = inject(TranslateService);
+  protected readonly theme = inject(ThemeService);
+  protected readonly auth = inject(AuthService);
   protected readonly localeOptions = LOCALE_OPTIONS;
 
   protected readonly title = signal('frontend');
@@ -36,13 +42,17 @@ export class App {
     this.currentUrl().startsWith('/dashboard'),
   );
 
+  protected readonly isAppRoute = computed(
+    () => this.currentUrl().startsWith('/dashboard') || this.currentUrl().startsWith('/tests'),
+  );
+
   protected readonly navLinks: NavLink[] = [
-    { label: 'Asosiy', route: '/', fragment: 'home' },
-    { label: 'Testlar', route: '/tests' },
-    { label: "O'quv materiallari", route: '/', fragment: 'platform' },
-    { label: 'Natijalar', route: '/', fragment: 'testimonials' },
-    { label: 'Biz haqimizda', route: '/', fragment: 'why-us' },
-    { label: 'Kontakt', route: '/', fragment: 'contact' },
+    { labelKey: 'nav.home', route: '/', fragment: 'home' },
+    { labelKey: 'nav.tests', route: '/tests' },
+    { labelKey: 'nav.materials', route: '/', fragment: 'platform' },
+    { labelKey: 'nav.results', route: '/', fragment: 'testimonials' },
+    { labelKey: 'nav.aboutUs', route: '/', fragment: 'why-us' },
+    { labelKey: 'nav.contact', route: '/', fragment: 'contact' },
   ];
 
   toggleMobileMenu(): void {

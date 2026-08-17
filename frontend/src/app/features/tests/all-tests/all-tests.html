@@ -1,0 +1,13 @@
+<section class="mx-auto max-w-7xl px-6 py-16">
+  @if (store.loading()) {
+    <p class="animate-pulse text-center text-lg text-slate-500 dark:text-slate-400">{{ translate.t('testRunner.loading') }}</p>
+  } @else {
+    <app-test-session
+      [questions]="store.questions()"
+      [title]="translate.t('pages.allTests.heading')"
+      [scored]="false"
+      [countdown]="false"
+      [allowSave]="true"
+    />
+  }
+</section>

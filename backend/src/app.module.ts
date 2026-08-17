@@ -8,9 +8,14 @@ import { AppService } from './app.service';
 import { QuestionsModule } from './questions/questions.module';
 import { TopicsModule } from './topics/topics.module';
 import { TicketsModule } from './tickets/tickets.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 import { Question } from './questions/entities/question.entity';
 import { Topic } from './topics/entities/topic.entity';
 import { Ticket } from './tickets/entities/ticket.entity';
+import { User } from './users/entities/user.entity';
+import { ContactMessage } from './contact-messages/entities/contact-message.entity';
 
 @Module({
   imports: [
@@ -39,7 +44,7 @@ import { Ticket } from './tickets/entities/ticket.entity';
                 password: config.get<string>('DB_PASSWORD', 'postgres'),
                 database: config.get<string>('DB_NAME', 'avtotez_guliston'),
               }),
-          entities: [Question, Topic, Ticket],
+          entities: [Question, Topic, Ticket, User, ContactMessage],
           synchronize: config.get<string>('NODE_ENV', 'development') !== 'production',
           ssl,
         };
@@ -48,6 +53,9 @@ import { Ticket } from './tickets/entities/ticket.entity';
     QuestionsModule,
     TopicsModule,
     TicketsModule,
+    UsersModule,
+    AuthModule,
+    ContactMessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,0 +1,19 @@
+<section class="mx-auto max-w-7xl px-6 py-16">
+  <a routerLink="/tests/topics" class="mb-4 inline-block text-sm font-semibold text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+    ← {{ translate.t('common.back') }}
+  </a>
+
+  @if (store.loading()) {
+    <p class="animate-pulse text-center text-lg text-slate-500 dark:text-slate-400">{{ translate.t('testRunner.loading') }}</p>
+  } @else if (questions().length > 0) {
+    <app-test-session
+      [questions]="questions()"
+      [title]="topicName()"
+      [scored]="false"
+      [countdown]="false"
+      [allowSave]="true"
+    />
+  } @else {
+    <p class="text-center text-lg text-slate-500 dark:text-slate-400">{{ translate.t('common.empty') }}</p>
+  }
+</section>

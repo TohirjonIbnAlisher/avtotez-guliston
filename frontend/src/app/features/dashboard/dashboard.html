@@ -1,29 +1,31 @@
-<div class="min-h-screen bg-slate-950">
+<div class="min-h-screen bg-slate-50 dark:bg-slate-950">
   <!-- Cabinet header -->
-  <header class="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/95 backdrop-blur">
+  <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3.5">
       <a routerLink="/" class="flex items-center gap-2.5">
         <app-logo-mark size="sm" />
-        <span class="hidden text-base font-extrabold tracking-tight text-white sm:inline">Avtotez Guliston</span>
+        <span class="hidden text-base font-extrabold tracking-tight text-slate-900 sm:inline dark:text-white">{{ translate.t('common.brand') }}</span>
       </a>
 
       <nav class="flex items-center gap-1 overflow-x-auto">
-        @for (pill of navPills; track pill.label) {
+        @for (pill of navPills; track pill.labelKey) {
           <a
             [routerLink]="pill.route"
             class="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap transition"
             [class.bg-brand-500/15]="pill.active"
             [class.text-brand-400]="pill.active"
-            [class.text-slate-300]="!pill.active"
-            [class.hover:bg-slate-800]="!pill.active"
+            [class.text-slate-600]="!pill.active"
+            [class.dark:text-slate-300]="!pill.active"
+            [class.hover:bg-slate-100]="!pill.active"
+            [class.dark:hover:bg-slate-800]="!pill.active"
           >
-            {{ pill.label }}
+            {{ translate.t(pill.labelKey) }}
           </a>
         }
       </nav>
 
       <div class="flex items-center gap-3">
-        <div class="hidden items-center gap-0.5 rounded-lg bg-slate-800 p-1 md:flex">
+        <div class="hidden items-center gap-0.5 rounded-lg bg-slate-100 p-1 dark:bg-slate-800 md:flex">
           @for (option of localeOptions; track option.code) {
             <button
               type="button"
@@ -31,83 +33,118 @@
               class="rounded-md px-2.5 py-1.5 text-sm font-semibold transition"
               [class.bg-brand-600]="languageService.locale() === option.code"
               [class.text-white]="languageService.locale() === option.code"
-              [class.text-slate-400]="languageService.locale() !== option.code"
+              [class.text-slate-500]="languageService.locale() !== option.code"
+              [class.dark:text-slate-400]="languageService.locale() !== option.code"
             >
               {{ option.label }}
             </button>
           }
         </div>
+
+        <button
+          type="button"
+          (click)="theme.toggle()"
+          [attr.aria-label]="translate.t('dashboard.theme.toggleAria')"
+          class="flex h-9 w-9 items-center justify-center rounded-lg text-lg text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+        >
+          {{ theme.mode() === 'dark' ? '☀️' : '🌙' }}
+        </button>
+
+        @if (userRole() === 'superadmin' || userRole() === 'admin') {
+          <a
+            routerLink="/admin"
+            class="hidden items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 sm:flex"
+          >
+            ⚙️ Boshqaruv paneli
+          </a>
+        }
+
         <div class="hidden items-center gap-2 sm:flex">
           <span class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
-            {{ userInitial }}
+            {{ userInitial() }}
           </span>
-          <span class="text-sm font-semibold text-slate-200">{{ userName }}</span>
+          <div class="flex flex-col leading-tight">
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ userName() }}</span>
+            @if (userRole() !== 'user') {
+              <span class="text-xs font-semibold text-brand-500">{{ roleLabel() }}</span>
+            }
+          </div>
         </div>
-        <a
-          routerLink="/"
-          class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-400 transition hover:bg-slate-800 hover:text-white"
+        <button
+          type="button"
+          (click)="logout()"
+          class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
         >
-          Chiqish
-        </a>
+          {{ translate.t('common.logout') }}
+        </button>
       </div>
     </div>
   </header>
 
   <main class="mx-auto max-w-7xl px-6 py-8">
     <!-- Progress overview -->
-    <section class="rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-950 to-slate-900 p-6 sm:p-8">
+    <section class="rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-50 to-white p-6 dark:from-brand-950 dark:to-slate-900 sm:p-8">
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-base font-semibold text-slate-300">Sizning progressingiz</h2>
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-orange-500/15 px-3 py-1 text-sm font-semibold text-orange-400">
-          🔥 {{ streakDays }} kun ketma-ket
-        </span>
+        <h2 class="text-base font-semibold text-slate-600 dark:text-slate-300">{{ translate.t('dashboard.progress.title') }}</h2>
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-orange-500/15 px-3 py-1 text-sm font-semibold text-orange-400">
+            🔥 {{ translate.t('dashboard.progress.streak', { days: streakDays() }) }}
+          </span>
+          <button
+            type="button"
+            (click)="resetProgress()"
+            class="rounded-full bg-slate-900/5 px-3 py-1 text-sm font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-500 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+          >
+            ↺ {{ translate.t('dashboard.progress.reset') }}
+          </button>
+        </div>
       </div>
 
-      <div class="mt-4 text-4xl font-extrabold text-white sm:text-5xl">{{ progressPercent }}%</div>
+      <div class="mt-4 text-4xl font-extrabold text-slate-900 dark:text-white sm:text-5xl">{{ progressPercent() }}%</div>
 
-      <div class="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-slate-800">
-        <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400" [style.width.%]="progressPercent"></div>
+      <div class="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+        <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400" [style.width.%]="progressPercent()"></div>
       </div>
 
       <div class="mt-6 flex flex-wrap gap-3">
-        <div class="flex items-center gap-2 rounded-xl bg-slate-900/60 px-4 py-2.5">
+        <div class="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-sm dark:bg-slate-900/60 dark:shadow-none">
           <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
-          <span class="text-sm text-slate-300">To'g'ri: <span class="font-bold text-white">{{ correctCount }}</span></span>
+          <span class="text-sm text-slate-600 dark:text-slate-300">{{ translate.t('dashboard.progress.correct') }} <span class="font-bold text-slate-900 dark:text-white">{{ correctCount() }}</span></span>
         </div>
-        <div class="flex items-center gap-2 rounded-xl bg-slate-900/60 px-4 py-2.5">
+        <div class="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-sm dark:bg-slate-900/60 dark:shadow-none">
           <span class="h-2 w-2 rounded-full bg-red-400"></span>
-          <span class="text-sm text-slate-300">Xato: <span class="font-bold text-white">{{ wrongCount }}</span></span>
+          <span class="text-sm text-slate-600 dark:text-slate-300">{{ translate.t('dashboard.progress.wrong') }} <span class="font-bold text-slate-900 dark:text-white">{{ wrongCount() }}</span></span>
         </div>
-        <div class="flex items-center gap-2 rounded-xl bg-slate-900/60 px-4 py-2.5">
-          <span class="h-2 w-2 rounded-full bg-slate-500"></span>
-          <span class="text-sm text-slate-300">O'tkazib yuborilgan: <span class="font-bold text-white">{{ skippedCount }}</span></span>
+        <div class="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-sm dark:bg-slate-900/60 dark:shadow-none">
+          <span class="h-2 w-2 rounded-full bg-slate-400"></span>
+          <span class="text-sm text-slate-600 dark:text-slate-300">{{ translate.t('dashboard.progress.skipped') }} <span class="font-bold text-slate-900 dark:text-white">{{ skippedCount() }}</span></span>
         </div>
       </div>
     </section>
 
     <!-- Quick actions -->
     <section class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-      @for (action of quickActions; track action.label) {
+      @for (action of quickActions; track action.labelKey) {
         <a
           [routerLink]="action.route"
-          class="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900 p-4 transition hover:border-slate-700 hover:bg-slate-800"
+          class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none dark:hover:border-slate-700 dark:hover:bg-slate-800"
         >
           <span class="flex h-10 w-10 items-center justify-center rounded-xl text-lg" [class]="action.iconBg">
             {{ action.icon }}
           </span>
-          <span class="font-semibold text-slate-100">{{ action.label }}</span>
+          <span class="font-semibold text-slate-900 dark:text-slate-100">{{ translate.t(action.labelKey) }}</span>
         </a>
       }
     </section>
 
     <!-- Motivational banner -->
     <section class="mt-4 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-5 py-4">
-      <p class="font-semibold text-white">🎯 Bugungi maqsad: kamida 20 ta savol yeching!</p>
+      <p class="font-semibold text-white">🎯 {{ translate.t('dashboard.banner.goal') }}</p>
     </section>
 
     <!-- Primary actions -->
     <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-      @for (card of primaryCards; track card.title) {
+      @for (card of primaryCards(); track card.title) {
         <a
           [routerLink]="card.route"
           class="group rounded-2xl bg-gradient-to-br p-6 text-white shadow-lg transition-transform duration-200 hover:-translate-y-1"
@@ -124,23 +161,40 @@
 
     <!-- Menu grid -->
     <section class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-      @for (tile of menuTiles; track tile.label) {
-        <div class="relative rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:border-slate-700 hover:bg-slate-800">
-          @if (tile.badge) {
-            <span class="absolute top-3 right-3 rounded-full bg-slate-700 px-2 py-0.5 text-xs font-semibold text-slate-300">
-              {{ tile.badge }}
+      @for (tile of menuTiles; track tile.labelKey) {
+        @if (tile.route) {
+          <a
+            [routerLink]="tile.route"
+            class="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none dark:hover:border-slate-700 dark:hover:bg-slate-800"
+          >
+            <span class="flex h-11 w-11 items-center justify-center rounded-xl text-lg" [class]="tile.iconBg">
+              {{ tile.icon }}
             </span>
-          }
-          <span class="flex h-11 w-11 items-center justify-center rounded-xl text-lg" [class]="tile.iconBg">
-            {{ tile.icon }}
-          </span>
-          <div class="mt-3 font-semibold text-slate-100">{{ tile.label }}</div>
-          @if (tile.progress !== undefined) {
-            <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
-              <div class="h-full rounded-full bg-brand-500" [style.width.%]="tile.progress"></div>
-            </div>
-          }
-        </div>
+            <div class="mt-3 font-semibold text-slate-900 dark:text-slate-100">{{ translate.t(tile.labelKey) }}</div>
+            @if (tile.progress !== undefined) {
+              <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                <div class="h-full rounded-full bg-brand-500" [style.width.%]="tile.progress"></div>
+              </div>
+            }
+          </a>
+        } @else {
+          <div class="relative rounded-2xl border border-slate-200 bg-white p-5 opacity-60 dark:border-slate-800 dark:bg-slate-900">
+            @if (tile.hasBadge) {
+              <span class="absolute top-3 right-3 rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                {{ translate.t('common.comingSoon') }}
+              </span>
+            }
+            <span class="flex h-11 w-11 items-center justify-center rounded-xl text-lg" [class]="tile.iconBg">
+              {{ tile.icon }}
+            </span>
+            <div class="mt-3 font-semibold text-slate-900 dark:text-slate-100">{{ translate.t(tile.labelKey) }}</div>
+            @if (tile.progress !== undefined) {
+              <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                <div class="h-full rounded-full bg-brand-500" [style.width.%]="tile.progress"></div>
+              </div>
+            }
+          </div>
+        }
       }
     </section>
   </main>

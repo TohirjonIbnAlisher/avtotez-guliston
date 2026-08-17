@@ -1,3 +1,4 @@
+<div class="bg-white text-slate-900">
 <!-- Hero -->
 <section id="home" class="relative scroll-mt-20 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800">
   <div class="animate-blob pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-brand-600/20 blur-3xl"></div>
@@ -7,26 +8,30 @@
     <div class="animate-fade-in-up flex-1 text-center lg:text-left">
       <span class="mb-5 inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1.5 text-sm font-semibold text-brand-400">
         <span class="h-1.5 w-1.5 rounded-full bg-brand-400"></span>
-        O'zbekistonning #1 avtomaktablaridan biri
+        {{ translate.t('landing.hero.badge') }}
       </span>
       <h1 class="text-4xl leading-tight font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-        Prava nazariy imtihonini
-        <span class="text-brand-400">birinchi urinishda</span>
-        topshiring!
+        {{ translate.t('landing.hero.titleLine1') }}
+        <span class="text-brand-400">{{ translate.t('landing.hero.titleHighlight') }}</span>
+        {{ translate.t('landing.hero.titleLine2') }}
       </h1>
       <p class="mx-auto mt-6 max-w-xl text-lg text-slate-300 lg:mx-0">
-        Mavzulashtirilgan testlar &bull; Tasodifiy random testlar &bull; Video darslar &bull; To'liq nazariya
+        {{ translate.t('landing.hero.subtitle') }}
       </p>
       <div class="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
         <a class="btn-primary" routerLink="/tests">
-          Bepul testni boshlash
+          {{ translate.t('landing.hero.ctaPrimary') }}
           <span aria-hidden="true">→</span>
         </a>
-        <a class="btn-outline-light" routerLink="/login">Kirish</a>
+        @if (auth.isAuthenticated()) {
+          <a class="btn-outline-light" routerLink="/dashboard">{{ translate.t('common.cabinet') }}</a>
+        } @else {
+          <a class="btn-outline-light" routerLink="/login">{{ translate.t('common.login') }}</a>
+        }
       </div>
       <button type="button" class="mt-8 inline-flex items-center gap-3 text-base font-semibold text-slate-300 transition hover:text-white" (click)="openVideo()">
         <span class="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur">▶</span>
-        Videoni ko'rish
+        {{ translate.t('landing.hero.watchVideo') }}
       </button>
     </div>
 
@@ -43,7 +48,7 @@
           playsinline
         ></video>
       </div>
-      @for (stat of heroStats; track stat.label; let i = $index) {
+      @for (stat of heroStats; track stat.labelKey; let i = $index) {
         <div
           class="animate-float absolute flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-xl"
           [class.top-6]="i === 0"
@@ -55,7 +60,7 @@
           <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-xl">{{ stat.icon }}</span>
           <div>
             <div class="text-xl font-extrabold text-slate-900">{{ stat.value }}</div>
-            <div class="text-sm text-slate-500">{{ stat.label }}</div>
+            <div class="text-sm text-slate-500">{{ translate.t(stat.labelKey) }}</div>
           </div>
         </div>
       }
@@ -66,7 +71,7 @@
 <!-- Trust bar -->
 <section class="border-b border-slate-100 bg-slate-50">
   <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-8 sm:grid-cols-2 lg:grid-cols-4">
-    @for (item of trustBar; track item.text) {
+    @for (item of trustBar(); track item.text) {
       <div class="flex items-center gap-3">
         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-lg">{{ item.icon }}</span>
         <span class="text-base font-medium text-slate-700">{{ item.text }}</span>
@@ -78,13 +83,13 @@
 <!-- Nima uchun aynan biz -->
 <section id="why-us" class="mx-auto max-w-7xl scroll-mt-20 px-6 py-20">
   <div appReveal class="mx-auto max-w-2xl text-center">
-    <h2 class="text-4xl font-extrabold text-slate-900 sm:text-5xl">Nima uchun Avtotez Guliston?</h2>
+    <h2 class="text-4xl font-extrabold text-slate-900 sm:text-5xl">{{ translate.t('landing.whyUs.heading') }}</h2>
     <p class="mt-3 text-lg text-slate-600">
-      O'zbekistondagi eng zamonaviy va samarali haydovchilik nazariyasi platformasi
+      {{ translate.t('landing.whyUs.subtitle') }}
     </p>
   </div>
   <div class="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-    @for (feature of whyUs; track feature.title; let i = $index) {
+    @for (feature of whyUs(); track feature.title; let i = $index) {
       <div
         appReveal
         [style.transition-delay.ms]="i * 100"
@@ -104,13 +109,13 @@
 <section id="platform" class="scroll-mt-20 bg-slate-50 py-20">
   <div class="mx-auto max-w-7xl px-6">
     <div appReveal class="mx-auto max-w-2xl text-center">
-      <h2 class="text-4xl font-extrabold text-slate-900 sm:text-5xl">Avtomaktabimizning imkoniyatlari</h2>
+      <h2 class="text-4xl font-extrabold text-slate-900 sm:text-5xl">{{ translate.t('landing.platform.heading') }}</h2>
       <p class="mt-3 text-lg text-slate-600">
-        Muvaffaqiyatli o'rganish uchun zarur bo'lgan barcha vositalar bir joyda
+        {{ translate.t('landing.platform.subtitle') }}
       </p>
     </div>
     <div class="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      @for (feature of platformFeatures; track feature.title; let i = $index) {
+      @for (feature of platformFeatures(); track feature.title; let i = $index) {
         <div
           appReveal
           [style.transition-delay.ms]="(i % 3) * 100"
@@ -130,7 +135,7 @@
       }
     </div>
     <div appReveal class="mt-12 text-center">
-      <a class="btn-primary" routerLink="/tests">Barcha imkoniyatlarni ko'rish</a>
+      <a class="btn-primary" routerLink="/tests">{{ translate.t('landing.platform.cta') }}</a>
     </div>
   </div>
 </section>
@@ -138,12 +143,12 @@
 <!-- Qanday ishlaydi -->
 <section class="mx-auto max-w-7xl px-6 py-20">
   <div appReveal class="mx-auto max-w-2xl text-center">
-    <h2 class="text-4xl font-extrabold text-slate-900 sm:text-5xl">Qanday jarayonlar sizni kutib turibdi?</h2>
-    <p class="mt-3 text-lg text-slate-600">4 ta oddiy qadam bilan muvaffaqiyatga erishing</p>
+    <h2 class="text-4xl font-extrabold text-slate-900 sm:text-5xl">{{ translate.t('landing.steps.heading') }}</h2>
+    <p class="mt-3 text-lg text-slate-600">{{ translate.t('landing.steps.subtitle') }}</p>
   </div>
   <div class="relative mt-16 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
     <div class="pointer-events-none absolute top-8 right-0 left-0 hidden h-0.5 bg-slate-200 lg:block"></div>
-    @for (step of steps; track step.title; let i = $index) {
+    @for (step of steps(); track step.title; let i = $index) {
       <div appReveal [style.transition-delay.ms]="i * 120" class="relative text-center">
         <span class="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 text-5xl font-extrabold text-slate-100">
           {{ step.number }}
@@ -157,18 +162,18 @@
     }
   </div>
   <div appReveal class="mt-14 text-center">
-    <a class="btn-dark" routerLink="/login">Hoziroq boshlang</a>
+    <a class="btn-dark" routerLink="/login">{{ translate.t('landing.steps.cta') }}</a>
   </div>
 </section>
 
 <!-- O'quvchilar fikrlari -->
 <section id="testimonials" class="scroll-mt-20 bg-gradient-to-br from-slate-900 to-slate-800 py-20">
   <div class="mx-auto max-w-3xl px-6 text-center">
-    <h2 class="text-4xl font-extrabold text-white sm:text-5xl">O'quvchilar fikrlari</h2>
-    <p class="mt-3 text-lg text-slate-300">Minglab o'quvchilar Avtotez Guliston orqali muvaffaqiyatga erishdi</p>
+    <h2 class="text-4xl font-extrabold text-white sm:text-5xl">{{ translate.t('landing.testimonials.heading') }}</h2>
+    <p class="mt-3 text-lg text-slate-300">{{ translate.t('landing.testimonials.subtitle') }}</p>
 
     <div appReveal class="relative mt-12">
-      @if (testimonials[currentTestimonial()]; as t) {
+      @if (testimonials()[currentTestimonial()]; as t) {
         <div class="rounded-3xl bg-white p-8 text-left shadow-2xl sm:p-10">
           <span class="text-5xl text-brand-200">&ldquo;</span>
           <p class="-mt-4 text-lg leading-relaxed text-slate-700 italic">{{ t.quote }}</p>
@@ -189,17 +194,17 @@
         <button
           type="button"
           (click)="prevTestimonial()"
-          aria-label="Oldingi"
+          [attr.aria-label]="translate.t('landing.testimonials.prevAria')"
           class="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
         >
           ‹
         </button>
         <div class="flex items-center gap-2">
-          @for (t of testimonials; track t.name; let i = $index) {
+          @for (t of testimonials(); track t.name; let i = $index) {
             <button
               type="button"
               (click)="goToTestimonial(i)"
-              [attr.aria-label]="'Sharh ' + (i + 1)"
+              [attr.aria-label]="translate.t('landing.testimonials.reviewAria', { n: i + 1 })"
               class="h-2 rounded-full transition-all duration-300"
               [class.w-8]="currentTestimonial() === i"
               [class.bg-brand-400]="currentTestimonial() === i"
@@ -211,7 +216,7 @@
         <button
           type="button"
           (click)="nextTestimonial()"
-          aria-label="Keyingi"
+          [attr.aria-label]="translate.t('landing.testimonials.nextAria')"
           class="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
         >
           ›
@@ -225,26 +230,26 @@
 <section id="contact" class="scroll-mt-20 bg-slate-50 py-20">
   <div class="mx-auto max-w-7xl px-6">
     <div appReveal class="mx-auto max-w-2xl text-center">
-      <h2 class="text-4xl font-extrabold text-slate-900 sm:text-5xl">Biz bilan bog'laning</h2>
-      <p class="mt-3 text-lg text-slate-600">Savol yoki takliflaringiz bo'lsa, biz bilan bog'laning</p>
+      <h2 class="text-4xl font-extrabold text-slate-900 sm:text-5xl">{{ translate.t('landing.contact.heading') }}</h2>
+      <p class="mt-3 text-lg text-slate-600">{{ translate.t('landing.contact.subtitle') }}</p>
     </div>
 
     <div class="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div appReveal class="rounded-2xl border border-slate-200 bg-white p-8">
-        <h3 class="text-xl font-bold text-slate-900">Aloqa ma'lumotlari</h3>
+        <h3 class="text-xl font-bold text-slate-900">{{ translate.t('landing.contact.infoTitle') }}</h3>
 
         <div class="mt-6 flex items-start gap-4">
           <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg">📍</span>
           <div>
-            <div class="font-semibold text-slate-900">Manzil</div>
-            <div class="mt-0.5 text-base text-slate-600">{{ contactAddress }}</div>
+            <div class="font-semibold text-slate-900">{{ translate.t('landing.contact.addressLabel') }}</div>
+            <div class="mt-0.5 text-base text-slate-600">{{ contactAddress() }}</div>
           </div>
         </div>
 
         <div class="mt-5 flex items-start gap-4">
           <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg">📞</span>
           <div>
-            <div class="font-semibold text-slate-900">Telefon</div>
+            <div class="font-semibold text-slate-900">{{ translate.t('landing.contact.phoneLabel') }}</div>
             @for (phone of contactPhones; track phone) {
               <div class="mt-0.5 text-base text-slate-600">{{ phone }}</div>
             }
@@ -254,7 +259,7 @@
         <div class="mt-5 flex items-start gap-4">
           <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg">✉️</span>
           <div>
-            <div class="font-semibold text-slate-900">Email</div>
+            <div class="font-semibold text-slate-900">{{ translate.t('landing.contact.emailLabel') }}</div>
             @for (email of contactEmails; track email) {
               <div class="mt-0.5 text-base text-slate-600">{{ email }}</div>
             }
@@ -262,7 +267,7 @@
         </div>
 
         <div class="mt-8 border-t border-slate-100 pt-6">
-          <div class="font-semibold text-slate-900">Ijtimoiy tarmoqlar</div>
+          <div class="font-semibold text-slate-900">{{ translate.t('landing.contact.socialTitle') }}</div>
           <div class="mt-3 flex gap-3">
             @for (link of socialLinks; track link.label) {
               <a
@@ -278,28 +283,56 @@
       </div>
 
       <div appReveal class="rounded-2xl border border-slate-200 bg-white p-8">
-        <h3 class="text-xl font-bold text-slate-900">Xabar yuboring</h3>
+        <h3 class="text-xl font-bold text-slate-900">{{ translate.t('landing.contact.formTitle') }}</h3>
         <p class="mt-1 text-base text-slate-500">
-          Telefon raqamingiz va ism-familiyangizni yuboring va biz sizga aloqaga chiqamiz
+          {{ translate.t('landing.contact.formSubtitle') }}
         </p>
-        <form class="mt-5 flex flex-col gap-4">
-          <input
-            type="text"
-            placeholder="Ismingiz"
-            class="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-base text-slate-900 disabled:bg-slate-50"
-          />
-          <input
-            type="phone"
-            placeholder="Telefon raqamingiz"
-            class="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-base text-slate-900 disabled:bg-slate-50"
-          />
-          <textarea
-            placeholder="Xabaringiz"
-            rows="4"
-            class="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-base text-slate-900 disabled:bg-slate-50"
-          ></textarea>
-          <button type="button" class="btn-primary w-full opacity-50">Yuborish</button>
-        </form>
+
+        @if (contactFormSent()) {
+          <div class="mt-5 rounded-xl bg-brand-50 px-4 py-4 text-center">
+            <p class="font-semibold text-brand-700">✅ Xabaringiz yuborildi!</p>
+            <p class="mt-1 text-sm text-brand-600">Tez orada siz bilan bog'lanamiz.</p>
+            <button
+              type="button"
+              class="mt-3 text-sm font-semibold text-brand-700 hover:underline"
+              (click)="contactFormSent.set(false)"
+            >
+              Yana xabar yuborish
+            </button>
+          </div>
+        } @else {
+          @if (contactFormError()) {
+            <p class="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+              {{ contactFormError() }}
+            </p>
+          }
+          <form class="mt-5 flex flex-col gap-4" (submit)="$event.preventDefault(); submitContactForm()">
+            <input
+              type="text"
+              [placeholder]="translate.t('landing.contact.placeholderName')"
+              class="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-base text-slate-900 disabled:bg-slate-50"
+              [value]="contactFormName()"
+              (input)="contactFormName.set($any($event.target).value)"
+            />
+            <input
+              type="tel"
+              placeholder="+998901234567"
+              class="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-base text-slate-900 disabled:bg-slate-50"
+              [value]="contactFormPhone()"
+              (input)="contactFormPhone.set($any($event.target).value)"
+            />
+            <textarea
+              [placeholder]="translate.t('landing.contact.placeholderMessage')"
+              rows="4"
+              class="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-base text-slate-900 disabled:bg-slate-50"
+              [value]="contactFormMessage()"
+              (input)="contactFormMessage.set($any($event.target).value)"
+            ></textarea>
+            <button type="submit" class="btn-primary w-full" [disabled]="contactFormSubmitting()">
+              {{ contactFormSubmitting() ? 'Yuborilmoqda...' : translate.t('landing.contact.submit') }}
+            </button>
+          </form>
+        }
       </div>
     </div>
   </div>
@@ -312,17 +345,17 @@
   <div appReveal class="relative mx-auto max-w-3xl px-6">
     <span class="mb-5 inline-flex items-center gap-2 rounded-full bg-brand-500/15 px-4 py-1.5 text-sm font-semibold text-brand-400">
       <span class="h-1.5 w-1.5 rounded-full bg-brand-400"></span>
-      Chegirma: Birinchi 100 ta o'quvchiga 50% chegirma!
+      {{ translate.t('landing.cta.badge') }}
     </span>
     <h2 class="text-4xl font-extrabold text-white sm:text-5xl">
-      Bugun haydovchilik litsenziyasiga <span class="text-brand-400">birinchi qadam</span> qo'ying!
+      {{ translate.t('landing.cta.headingPart1') }} <span class="text-brand-400">{{ translate.t('landing.cta.headingHighlight') }}</span> {{ translate.t('landing.cta.headingPart2') }}
     </h2>
     <p class="mt-5 text-lg text-slate-300">
-      5000+ o'quvchi Avtotez Guliston orqali muvaffaqiyatga erishdi. Navbat sizga!
+      {{ translate.t('landing.cta.subtitle') }}
     </p>
 
     <div class="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-      @for (text of ['Rasmiy imtihonga 100% mos testlar', 'Tajribali ustozlardan darslar, batafsil video darslar va izohlar', 'O\'rganish jarayoni kuzatuvi va statistika', 'Professional va sifatli ta\'lim oling']; track text) {
+      @for (text of ctaChecklist(); track text) {
         <div class="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-3 text-left text-sm font-medium text-slate-200">
           <span class="text-brand-400">✓</span>
           {{ text }}
@@ -331,17 +364,24 @@
     </div>
 
     <div class="mt-8 flex flex-wrap justify-center gap-3">
-      <a class="btn-primary" routerLink="/login">
-        Kirish
-        <span aria-hidden="true">→</span>
-      </a>
-      <a class="btn-outline-light" routerLink="/tests">Bepul testni sinab ko'ring</a>
+      @if (auth.isAuthenticated()) {
+        <a class="btn-primary" routerLink="/dashboard">
+          {{ translate.t('common.cabinet') }}
+          <span aria-hidden="true">→</span>
+        </a>
+      } @else {
+        <a class="btn-primary" routerLink="/login">
+          {{ translate.t('common.login') }}
+          <span aria-hidden="true">→</span>
+        </a>
+      }
+      <a class="btn-outline-light" routerLink="/tests">{{ translate.t('landing.cta.tryFree') }}</a>
     </div>
 
     <div class="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-slate-400">
-      <span>✓ Ortiqcha ovoragarchilik talab qilinmaydi</span>
-      <span>✓ Siz telefon raqamingizni qoldiring, o'zimiz bog'lanamiz</span>
-      <span>✓ 24/7 qo'llab-quvvatlash</span>
+      <span>✓ {{ translate.t('landing.cta.note1') }}</span>
+      <span>✓ {{ translate.t('landing.cta.note2') }}</span>
+      <span>✓ {{ translate.t('landing.cta.note3') }}</span>
     </div>
   </div>
 </section>
@@ -352,10 +392,10 @@
     <div>
       <div class="flex items-center gap-2.5">
         <app-logo-mark />
-        <span class="text-lg font-extrabold text-white">Avtotez Guliston</span>
+        <span class="text-lg font-extrabold text-white">{{ translate.t('common.brand') }}</span>
       </div>
       <p class="mt-4 text-base text-slate-400">
-        O'zbekistonning eng yaxshi avtomaktablaridan biri. Biz bilan muvaffaqiyatga ishonch bilan erishing!
+        {{ translate.t('landing.footer.tagline') }}
       </p>
       <div class="mt-5 flex gap-3">
         @for (link of socialLinks; track link.label) {
@@ -370,7 +410,7 @@
       </div>
     </div>
 
-    @for (column of footerColumns; track column.title) {
+    @for (column of footerColumns(); track column.title) {
       <div>
         <h4 class="text-lg font-bold text-white">{{ column.title }}</h4>
         <div class="mt-4 flex flex-col gap-2.5">
@@ -389,10 +429,10 @@
   </div>
 
   <div class="mx-auto mt-12 flex max-w-7xl flex-col items-center justify-between gap-3 border-t border-slate-800 pt-6 text-sm text-slate-500 sm:flex-row">
-    <p>© 2026 Avtotez Guliston. Barcha huquqlar himoyalangan.</p>
+    <p>{{ translate.t('landing.footer.copyright', { year: currentYear }) }}</p>
     <div class="flex gap-5">
-      <a href="#" class="transition hover:text-white">Foydalanish shartlari</a>
-      <a href="#" class="transition hover:text-white">Maxfiylik siyosati</a>
+      <a href="#" class="transition hover:text-white">{{ translate.t('landing.footer.terms') }}</a>
+      <a href="#" class="transition hover:text-white">{{ translate.t('landing.footer.privacy') }}</a>
     </div>
   </div>
 </footer>
@@ -407,7 +447,7 @@
       type="button"
       class="absolute top-6 right-6 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
       (click)="closeVideo()"
-      aria-label="Yopish"
+      [attr.aria-label]="translate.t('landing.footer.closeVideoAria')"
     >
       ✕
     </button>
@@ -418,7 +458,8 @@
       (click)="$event.stopPropagation()"
     >
       <source [src]="heroVideo" />
-      Brauzeringiz video formatini qo'llab-quvvatlamaydi.
+      {{ translate.t('landing.footer.videoUnsupported') }}
     </video>
   </div>
 }
+</div>

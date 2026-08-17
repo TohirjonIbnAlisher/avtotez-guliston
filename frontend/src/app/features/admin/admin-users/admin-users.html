@@ -1,0 +1,145 @@
+<section class="mx-auto max-w-5xl px-6 py-12">
+  <a routerLink="/admin" class="mb-4 inline-block text-sm font-semibold text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+    ← Boshqaruv paneli
+  </a>
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white">Foydalanuvchilar</h1>
+    <button type="button" class="btn-primary" (click)="openCreate()">+ Yangi foydalanuvchi</button>
+  </div>
+
+  @if (error() && !formOpen()) {
+    <p class="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:bg-red-500/10 dark:text-red-400">
+      {{ error() }}
+    </p>
+  }
+
+  @if (formOpen()) {
+    <div class="mt-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+      <h2 class="text-lg font-bold text-slate-900 dark:text-white">
+        {{ form().id ? "Foydalanuvchini tahrirlash" : "Yangi foydalanuvchi" }}
+      </h2>
+
+      @if (error()) {
+        <p class="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-400">
+          {{ error() }}
+        </p>
+      }
+
+      <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Telefon raqam</label>
+          <input
+            type="tel"
+            placeholder="+998901234567"
+            [value]="form().phone"
+            (input)="updateField('phone', $any($event.target).value)"
+            class="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">
+            Parol {{ form().id ? '(o\'zgartirmaslik uchun bo\'sh qoldiring)' : '' }}
+          </label>
+          <div class="relative">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              [value]="form().password"
+              (input)="updateField('password', $any($event.target).value)"
+              class="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 pr-11 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+            <button
+              type="button"
+              (click)="togglePasswordVisibility()"
+              class="absolute top-1/2 right-3 -translate-y-1/2 text-base text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              {{ showPassword() ? '🙈' : '👁️' }}
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Ism</label>
+          <input
+            type="text"
+            [value]="form().fullName"
+            (input)="updateField('fullName', $any($event.target).value)"
+            class="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Rol</label>
+          <select
+            [value]="form().role"
+            (change)="updateField('role', $any($event.target).value)"
+            class="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          >
+            @for (role of roles; track role) {
+              <option [value]="role">{{ role }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-5 flex gap-3">
+        <button type="button" class="btn-primary" [disabled]="saving()" (click)="submit()">
+          {{ saving() ? 'Saqlanmoqda...' : 'Saqlash' }}
+        </button>
+        <button
+          type="button"
+          class="rounded-xl border-2 border-slate-200 px-5 py-2.5 text-base font-semibold text-slate-600 dark:border-slate-700 dark:text-slate-300"
+          (click)="closeForm()"
+        >
+          Bekor qilish
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="animate-pulse mt-8 text-center text-lg text-slate-500 dark:text-slate-400">Yuklanmoqda...</p>
+  } @else {
+    <div class="mt-6 overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-50 text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+          <tr>
+            <th class="px-4 py-3 font-semibold">Telefon raqam</th>
+            <th class="px-4 py-3 font-semibold">Ism</th>
+            <th class="px-4 py-3 font-semibold">Rol</th>
+            <th class="px-4 py-3 font-semibold"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
+          @for (user of users(); track user.id) {
+            <tr>
+              <td class="px-4 py-3 text-slate-900 dark:text-white">{{ user.phone }}</td>
+              <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ user.fullName || '—' }}</td>
+              <td class="px-4 py-3">
+                <span
+                  class="rounded-full px-2.5 py-1 text-xs font-semibold"
+                  [class.bg-brand-100]="user.role === 'superadmin'"
+                  [class.text-brand-700]="user.role === 'superadmin'"
+                  [class.dark:bg-brand-500/15]="user.role === 'superadmin'"
+                  [class.dark:text-brand-400]="user.role === 'superadmin'"
+                  [class.bg-slate-100]="user.role !== 'superadmin'"
+                  [class.text-slate-600]="user.role !== 'superadmin'"
+                  [class.dark:bg-slate-800]="user.role !== 'superadmin'"
+                  [class.dark:text-slate-300]="user.role !== 'superadmin'"
+                >
+                  {{ user.role }}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <button type="button" class="mr-3 font-semibold text-brand-600 hover:underline dark:text-brand-400" (click)="openEdit(user)">
+                  Tahrirlash
+                </button>
+                <button type="button" class="font-semibold text-red-500 hover:underline" (click)="remove(user)">
+                  O'chirish
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

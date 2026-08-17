@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-brand-50: #f0fdf4;
   --color-brand-100: #dcfce7;
@@ -11,6 +13,15 @@
   --color-brand-700: #15803d;
   --color-brand-800: #166534;
   --color-brand-900: #14532d;
+  --color-brand-950: #0a2f19;
+
+  /* dataviz skill — reference palette (sequential blue + status good/critical) */
+  --color-chart-blue: #2a78d6;
+  --color-chart-blue-dark: #3987e5;
+  --color-chart-orange: #eb6834;
+  --color-chart-orange-dark: #d95926;
+  --color-status-good: #0ca30c;
+  --color-status-critical: #d03b3b;
 
   --animate-fade-in-up: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade-in: fade-in 0.8s ease-out both;
@@ -70,6 +81,10 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+}
+
+body {
+  @apply bg-white text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100;
 }
 
 @layer components {

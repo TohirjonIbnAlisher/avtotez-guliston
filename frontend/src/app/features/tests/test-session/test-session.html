@@ -1,0 +1,216 @@
+@if (!sessionEnded()) {
+  <div class="animate-fade-in-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      @if (title()) {
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ title() }}</h2>
+      }
+      <div class="ml-auto flex items-center gap-3">
+        @if (allowSave()) {
+          <button
+            type="button"
+            class="flex items-center gap-1.5 rounded-lg border-2 px-3 py-1.5 text-sm font-semibold transition"
+            [class.border-brand-600]="isCurrentSaved()"
+            [class.text-brand-700]="isCurrentSaved()"
+            [class.dark:text-brand-400]="isCurrentSaved()"
+            [class.border-slate-200]="!isCurrentSaved()"
+            [class.dark:border-slate-700]="!isCurrentSaved()"
+            [class.text-slate-500]="!isCurrentSaved()"
+            [class.dark:text-slate-400]="!isCurrentSaved()"
+            (click)="toggleSave()"
+          >
+            {{ isCurrentSaved() ? '★' : '☆' }}
+            {{ isCurrentSaved() ? translate.t('common.saved') : translate.t('common.save') }}
+          </button>
+        }
+        <span class="flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          🕐 {{ timeDisplay() }}
+        </span>
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-nowrap gap-1.5 overflow-x-auto pb-1">
+      @for (q of questions(); track q.id; let i = $index) {
+        <button
+          type="button"
+          (click)="goTo(i)"
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold transition"
+          [class.bg-brand-600]="i === currentIndex()"
+          [class.text-white]="i === currentIndex()"
+          [class.bg-emerald-100]="i !== currentIndex() && answers()[q.id] === q.correctOptionIndex"
+          [class.text-emerald-700]="i !== currentIndex() && answers()[q.id] === q.correctOptionIndex"
+          [class.dark:bg-emerald-500/15]="i !== currentIndex() && answers()[q.id] === q.correctOptionIndex"
+          [class.dark:text-emerald-400]="i !== currentIndex() && answers()[q.id] === q.correctOptionIndex"
+          [class.bg-red-100]="i !== currentIndex() && answers()[q.id] !== undefined && answers()[q.id] !== q.correctOptionIndex"
+          [class.text-red-700]="i !== currentIndex() && answers()[q.id] !== undefined && answers()[q.id] !== q.correctOptionIndex"
+          [class.dark:bg-red-500/15]="i !== currentIndex() && answers()[q.id] !== undefined && answers()[q.id] !== q.correctOptionIndex"
+          [class.dark:text-red-400]="i !== currentIndex() && answers()[q.id] !== undefined && answers()[q.id] !== q.correctOptionIndex"
+          [class.bg-slate-100]="i !== currentIndex() && answers()[q.id] === undefined"
+          [class.text-slate-500]="i !== currentIndex() && answers()[q.id] === undefined"
+          [class.dark:bg-slate-800]="i !== currentIndex() && answers()[q.id] === undefined"
+          [class.dark:text-slate-400]="i !== currentIndex() && answers()[q.id] === undefined"
+        >
+          {{ i + 1 }}
+        </button>
+      }
+    </div>
+
+    @if (currentQuestion(); as question) {
+      <div class="mt-6">
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ question.text }}</h3>
+
+        @if (question.imageUrl) {
+          <img
+            class="mt-4 max-w-full cursor-zoom-in rounded-xl"
+            [src]="question.imageUrl"
+            alt=""
+            (click)="openImage()"
+          />
+        }
+
+        <ul class="mt-5 flex flex-col gap-2.5">
+          @for (option of question.options; track $index) {
+            <li>
+              <button
+                type="button"
+                class="w-full rounded-xl border-2 px-4 py-3 text-left text-base font-medium transition-all duration-150"
+                [class.border-emerald-600]="optionState($index) === 'correct'"
+                [class.bg-emerald-50]="optionState($index) === 'correct'"
+                [class.text-emerald-800]="optionState($index) === 'correct'"
+                [class.dark:bg-emerald-500/10]="optionState($index) === 'correct'"
+                [class.dark:text-emerald-400]="optionState($index) === 'correct'"
+                [class.border-red-600]="optionState($index) === 'wrong'"
+                [class.bg-red-50]="optionState($index) === 'wrong'"
+                [class.text-red-800]="optionState($index) === 'wrong'"
+                [class.dark:bg-red-500/10]="optionState($index) === 'wrong'"
+                [class.dark:text-red-400]="optionState($index) === 'wrong'"
+                [class.border-slate-200]="optionState($index) === 'neutral'"
+                [class.dark:border-slate-700]="optionState($index) === 'neutral'"
+                [class.text-slate-800]="optionState($index) === 'neutral'"
+                [class.dark:text-slate-200]="optionState($index) === 'neutral'"
+                [class.hover:border-brand-300]="optionState($index) === 'neutral' && !isAnswered()"
+                (click)="selectOption($index)"
+              >
+                {{ option }}
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (isAnswered() && question.explanation) {
+          <p class="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 italic dark:bg-slate-800/60 dark:text-slate-300">
+            {{ question.explanation }}
+          </p>
+        }
+
+        <div class="mt-6 flex items-center justify-between gap-3">
+          <span class="text-sm text-slate-400 dark:text-slate-500">{{ currentIndex() + 1 }} / {{ questions().length }}</span>
+          @if (!isLastQuestion()) {
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="!isAnswered()"
+              (click)="next()"
+            >
+              {{ translate.t('testRunner.nextBtn') }}
+            </button>
+          } @else if (scored()) {
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="!isAnswered()"
+              (click)="next()"
+            >
+              {{ translate.t('testRunner.finishBtn') }}
+            </button>
+          } @else if (isAnswered()) {
+            <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ translate.t('testRunner.practiceDone') }}</span>
+          }
+        </div>
+      </div>
+
+      @if (imageOpen() && question.imageUrl) {
+        <div
+          class="fixed inset-0 z-100 flex items-center justify-center bg-black/90 p-4"
+          (click)="closeImage()"
+        >
+          <button
+            type="button"
+            class="absolute top-6 right-6 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
+            (click)="closeImage()"
+            [attr.aria-label]="translate.t('common.close')"
+          >
+            ✕
+          </button>
+          <img
+            class="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl"
+            [src]="question.imageUrl"
+            alt=""
+            (click)="$event.stopPropagation()"
+          />
+        </div>
+      }
+    }
+  </div>
+} @else {
+  <div class="animate-fade-in-up rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+    <h2
+      class="text-3xl font-extrabold"
+      [class.text-emerald-600]="passed()"
+      [class.dark:text-emerald-400]="passed()"
+      [class.text-red-600]="!passed()"
+      [class.dark:text-red-400]="!passed()"
+    >
+      {{ passed() ? translate.t('testRunner.passed') : translate.t('testRunner.failed') }}
+    </h2>
+    <p class="mt-1 text-lg font-semibold text-slate-500 dark:text-slate-400">
+      {{ translate.t('testRunner.scoreSummary', { correct: correctCount(), total: questions().length, threshold: passThreshold() }) }}
+    </p>
+
+    <div class="mt-5 grid grid-cols-3 gap-3">
+      <div class="rounded-xl bg-emerald-50 p-4 text-center dark:bg-emerald-500/10">
+        <div class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{{ correctCount() }}</div>
+        <div class="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-400">{{ translate.t('testRunner.correctCountLabel') }}</div>
+      </div>
+      <div class="rounded-xl bg-red-50 p-4 text-center dark:bg-red-500/10">
+        <div class="text-2xl font-extrabold text-red-600 dark:text-red-400">{{ wrongCount() }}</div>
+        <div class="mt-1 text-sm font-semibold text-red-700 dark:text-red-400">{{ translate.t('testRunner.wrongCountLabel') }}</div>
+      </div>
+      <div class="rounded-xl bg-slate-100 p-4 text-center dark:bg-slate-800">
+        <div class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ correctPercent() }}%</div>
+        <div class="mt-1 text-sm font-semibold text-slate-600 dark:text-slate-300">{{ translate.t('testRunner.percentLabel') }}</div>
+      </div>
+    </div>
+
+    <ol class="mt-6 flex flex-col gap-3">
+      @for (question of questions(); track question.id; let i = $index) {
+        <li
+          class="rounded-xl border-2 p-4"
+          [class.border-emerald-500]="answers()[question.id] === question.correctOptionIndex"
+          [class.bg-emerald-50]="answers()[question.id] === question.correctOptionIndex"
+          [class.dark:bg-emerald-500/10]="answers()[question.id] === question.correctOptionIndex"
+          [class.border-red-500]="answers()[question.id] !== question.correctOptionIndex"
+          [class.bg-red-50]="answers()[question.id] !== question.correctOptionIndex"
+          [class.dark:bg-red-500/10]="answers()[question.id] !== question.correctOptionIndex"
+        >
+          <p class="text-lg font-semibold text-slate-900 dark:text-white">{{ question.text }}</p>
+          <p class="mt-1 text-base text-slate-600 dark:text-slate-300">
+            {{ translate.t('testRunner.yourAnswer') }}
+            {{ answers()[question.id] !== undefined ? question.options[answers()[question.id]] : translate.t('testRunner.notMarked') }}
+          </p>
+          @if (answers()[question.id] !== question.correctOptionIndex) {
+            <p class="mt-1 text-base font-semibold text-emerald-600 dark:text-emerald-400">
+              {{ translate.t('testRunner.correctAnswer') }} {{ question.options[question.correctOptionIndex] }}
+            </p>
+          }
+          @if (question.explanation) {
+            <p class="mt-1 text-base text-slate-500 italic dark:text-slate-400">{{ question.explanation }}</p>
+          }
+        </li>
+      }
+    </ol>
+
+    <button type="button" class="btn-primary mt-6 w-full" (click)="restart()">
+      {{ translate.t('testRunner.restartBtn') }}
+    </button>
+  </div>
+}

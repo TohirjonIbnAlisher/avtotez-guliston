@@ -5,6 +5,29 @@ import { Ticket } from './entities/ticket.entity';
 import { Question } from '../questions/entities/question.entity';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
+import { DEFAULT_LOCALE, Locale } from '../questions/locale';
+import { resolveQuestion } from '../questions/resolve-question';
+
+function sortQuestionsBySourceId(ticket: Ticket): Ticket {
+  ticket.questions = [...ticket.questions].sort(
+    (a, b) => (a.sourceId ?? 0) - (b.sourceId ?? 0),
+  );
+  return ticket;
+}
+
+export interface ResolvedTicket {
+  id: string;
+  number: number;
+  questions: ReturnType<typeof resolveQuestion>[];
+}
+
+function resolveTicket(ticket: Ticket, lang: Locale): ResolvedTicket {
+  return {
+    id: ticket.id,
+    number: ticket.number,
+    questions: ticket.questions.map((question) => resolveQuestion(question, lang)),
+  };
+}
 
 @Injectable()
 export class TicketsService {
@@ -24,14 +47,20 @@ export class TicketsService {
     return this.ticketsRepository.save(ticket);
   }
 
-  findAll(): Promise<Ticket[]> {
-    return this.ticketsRepository.find({
+  async findAll(lang: Locale = DEFAULT_LOCALE): Promise<ResolvedTicket[]> {
+    const tickets = await this.ticketsRepository.find({
       relations: { questions: true },
       order: { number: 'ASC' },
     });
+    return tickets.map((ticket) => resolveTicket(sortQuestionsBySourceId(ticket), lang));
   }
 
-  async findOne(id: string): Promise<Ticket> {
+  async findOne(id: string, lang: Locale = DEFAULT_LOCALE): Promise<ResolvedTicket> {
+    const ticket = await this.findEntityOrThrow(id);
+    return resolveTicket(sortQuestionsBySourceId(ticket), lang);
+  }
+
+  private async findEntityOrThrow(id: string): Promise<Ticket> {
     const ticket = await this.ticketsRepository.findOne({
       where: { id },
       relations: { questions: true },
@@ -43,7 +72,7 @@ export class TicketsService {
   }
 
   async update(id: string, dto: UpdateTicketDto): Promise<Ticket> {
-    const ticket = await this.findOne(id);
+    const ticket = await this.findEntityOrThrow(id);
     const { questionIds, ...rest } = dto;
     const questions = questionIds
       ? await this.getQuestionsOrThrow(questionIds)

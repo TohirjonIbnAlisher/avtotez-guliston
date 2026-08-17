@@ -1,0 +1,73 @@
+<section class="mx-auto max-w-6xl px-6 py-12">
+  <a routerLink="/admin" class="mb-4 inline-block text-sm font-semibold text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+    ← Boshqaruv paneli
+  </a>
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white">
+      Savollar <span class="text-base font-normal text-slate-400">({{ filteredQuestions().length }})</span>
+    </h1>
+    <a routerLink="/admin/questions/new" class="btn-primary">+ Yangi savol</a>
+  </div>
+
+  @if (error()) {
+    <p class="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:bg-red-500/10 dark:text-red-400">
+      {{ error() }}
+    </p>
+  }
+
+  <div class="mt-5 flex flex-wrap gap-3">
+    <input
+      type="text"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+      placeholder="Savol matni bo'yicha qidirish..."
+      class="w-full max-w-sm rounded-xl border-2 border-slate-200 px-4 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+    />
+    <select
+      [value]="topicFilter()"
+      (change)="topicFilter.set($any($event.target).value)"
+      class="rounded-xl border-2 border-slate-200 px-4 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+    >
+      <option value="">Barcha mavzular</option>
+      @for (topic of topics(); track topic.id) {
+        <option [value]="topic.id">{{ topic.name }}</option>
+      }
+    </select>
+  </div>
+
+  @if (loading()) {
+    <p class="animate-pulse mt-8 text-center text-lg text-slate-500 dark:text-slate-400">Yuklanmoqda...</p>
+  } @else {
+    <div class="mt-6 overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-50 text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+          <tr>
+            <th class="px-4 py-3 font-semibold">Savol</th>
+            <th class="px-4 py-3 font-semibold">Mavzu</th>
+            <th class="px-4 py-3 font-semibold"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
+          @for (question of filteredQuestions(); track question.id) {
+            <tr>
+              <td class="max-w-md px-4 py-3 text-slate-900 dark:text-white">{{ question.text }}</td>
+              <td class="px-4 py-3 text-slate-500 dark:text-slate-400">{{ question.topic?.name || '—' }}</td>
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                <a
+                  [routerLink]="['/admin/questions', question.id, 'edit']"
+                  class="mr-3 font-semibold text-brand-600 hover:underline dark:text-brand-400"
+                >
+                  Tahrirlash
+                </a>
+                <button type="button" class="font-semibold text-red-500 hover:underline" (click)="remove(question)">
+                  O'chirish
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

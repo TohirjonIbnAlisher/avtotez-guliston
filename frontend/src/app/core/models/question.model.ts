@@ -15,3 +15,9 @@ export interface Question {
   isNumberRelated: boolean;
   topic: Topic | null;
 }
+
+export interface Ticket {
+  id: string;
+  number: number;
+  questions: Question[];
+}

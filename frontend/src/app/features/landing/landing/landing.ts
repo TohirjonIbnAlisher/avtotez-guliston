@@ -1,63 +1,31 @@
-import { AfterViewInit, Component, ElementRef, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { RevealDirective } from '../../../shared/reveal.directive';
 import { LogoMark } from '../../../shared/logo-mark/logo-mark';
+import { TranslateService } from '../../../core/services/translate.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { ContactMessagesApiService } from '../../../core/services/contact-messages-api.service';
+import { normalizePhone } from '../../../core/utils/phone.util';
 
 interface HeroStat {
   icon: string;
   value: string;
-  label: string;
+  labelKey: string;
 }
 
-interface TrustItem {
-  icon: string;
-  text: string;
-}
-
-interface ColoredFeature {
-  icon: string;
-  iconBg: string;
-  title: string;
-  description: string;
-}
-
-interface Feature {
-  icon: string;
-  title: string;
-  description: string;
-  badge?: string;
-}
-
-interface Step {
-  number: string;
-  icon: string;
-  title: string;
-  description: string;
-}
-
-interface Testimonial {
-  initials: string;
-  name: string;
-  role: string;
-  quote: string;
-}
+const TRUST_ICONS = ['✅', '📈', '🛡️', '✔️'];
+const WHY_US_ICONS = ['🎯', '🏅', '⏱️', '🎓'];
+const WHY_US_BG = ['bg-blue-500', 'bg-brand-500', 'bg-purple-500', 'bg-rose-500'];
+const PLATFORM_ICONS = ['📖', '🔀', '🎥', '⚠️', '📊', '📱'];
+const PLATFORM_HAS_BADGE = [false, false, false, false, false, true];
+const STEP_NUMBERS = ['01', '02', '03', '04'];
+const STEP_ICONS = ['🔑', '📚', '🎯', '🏆'];
+const TESTIMONIAL_INITIALS = ['NK', 'JQ', 'MS'];
 
 interface SocialLink {
   label: string;
   icon: string;
   href: string;
-}
-
-interface FooterLink {
-  label: string;
-  route?: string;
-  fragment?: string;
-  href?: string;
-}
-
-interface FooterColumn {
-  title: string;
-  links: FooterLink[];
 }
 
 @Component({
@@ -66,9 +34,14 @@ interface FooterColumn {
   templateUrl: './landing.html',
 })
 export class Landing implements AfterViewInit {
+  protected readonly translate = inject(TranslateService);
+  protected readonly auth = inject(AuthService);
+  private readonly contactMessagesApi = inject(ContactMessagesApiService);
+
   readonly heroImage = '/images/main-landing.jpg';
   readonly heroVideo = '/videos/hero-intro.mov';
   readonly videoOpen = signal(false);
+  readonly currentYear = new Date().getFullYear();
 
   private readonly heroVideoRef = viewChild<ElementRef<HTMLVideoElement>>('heroVideoEl');
 
@@ -91,115 +64,51 @@ export class Landing implements AfterViewInit {
   }
 
   readonly heroStats: HeroStat[] = [
-    { icon: '👥', value: '5000+', label: "O'quvchilar" },
-    { icon: '✅', value: '95%', label: 'Muvaffaqiyat darajasi' },
+    { icon: '👥', value: '5000+', labelKey: 'landing.hero.statsStudents' },
+    { icon: '✅', value: '95%', labelKey: 'landing.hero.statsSuccessRate' },
   ];
 
-  readonly trustBar: TrustItem[] = [
-    { icon: '✅', text: "5000+ o'quvchi muvaffaqiyatli topshirdi" },
-    { icon: '📈', text: '95% muvaffaqiyat darajasi' },
-    { icon: '🛡️', text: 'Rasmiy testga 100% mos' },
-    { icon: '✔️', text: 'Kafolatlangan natija' },
-  ];
+  protected readonly trustBar = computed(() =>
+    this.translate.array<string>('landing.trust').map((text, i) => ({ icon: TRUST_ICONS[i], text })),
+  );
 
-  readonly whyUs: ColoredFeature[] = [
-    {
-      icon: '🎯',
-      iconBg: 'bg-blue-500',
-      title: 'Aniq maqsad',
-      description: "Har bir test rasmiy imtihon formatiga 100% mos holda tuzilgan. Hech qanday keraksiz materiallar yo'q.",
-    },
-    {
-      icon: '🏅',
-      iconBg: 'bg-brand-500',
-      title: 'Kafolatlangan natija',
-      description: "95% o'quvchilarimiz birinchi urinishda imtihondan o'tishadi. Siz ham ularga qo'shiling!",
-    },
-    {
-      icon: '⏱️',
-      iconBg: 'bg-purple-500',
-      title: 'Vaqtni tejang',
-      description: "Mavzulashtirilgan testlar va izohlar bilan o'rganish jarayonini 3 baravar tezlashtiring.",
-    },
-    {
-      icon: '🎓',
-      iconBg: 'bg-rose-500',
-      title: 'Professional ustozlar',
-      description: "Tajribali ustozlardan professional darslar oling — har bir mavzu chuqur va tushunarli tarzda tushuntiriladi.",
-    },
-  ];
+  protected readonly whyUs = computed(() =>
+    this.translate
+      .array<{ title: string; description: string }>('landing.whyUs.items')
+      .map((item, i) => ({ ...item, icon: WHY_US_ICONS[i], iconBg: WHY_US_BG[i] })),
+  );
 
-  readonly platformFeatures: Feature[] = [
-    {
-      icon: '📖',
-      title: 'Mavzulashtirilgan testlar',
-      description: "Barcha mavzular bo'yicha tuzilgan testlar. Har bir mavzuni tajribali o'qituvchilar bilan alohida o'rganing va mustahkamlang.",
-    },
-    {
-      icon: '🔀',
-      title: 'Random testlar',
-      description: "Haqiqiy imtihonga o'xshash random testlar. O'zingizni sinab ko'ring!",
-    },
-    {
-      icon: '🎥',
-      title: 'Video darslar',
-      description: "Har bir mavzu bo'yicha professional video darslar va nazariy materiallar.",
-    },
-    {
-      icon: '⚠️',
-      title: 'Xatolarni tahlil qilish',
-      description: "Har bir xato uchun batafsil izoh va to'g'ri javob. Xatolaringizdan o'rganing.",
-    },
-    {
-      icon: '📊',
-      title: 'Progress kuzatuvi',
-      description: "Batafsil statistika va taraqqiyotingizni kuzatish. Qaysi mavzularda zaif ekanligingizni bilib oling.",
-    },
-    {
-      icon: '📱',
-      title: 'Mobil ilova',
-      description: 'Istalgan joyda istalgan vaqtda o\'rganing. iOS va Android uchun.',
-      badge: 'Tez orada',
-    },
-  ];
+  protected readonly platformFeatures = computed(() =>
+    this.translate
+      .array<{ title: string; description: string }>('landing.platform.features')
+      .map((item, i) => ({
+        ...item,
+        icon: PLATFORM_ICONS[i],
+        badge: PLATFORM_HAS_BADGE[i] ? this.translate.t('common.comingSoon') : undefined,
+      })),
+  );
 
-  readonly steps: Step[] = [
-    { number: '01', icon: '🔑', title: 'Tizimga kiring', description: "Tezkor va oson tizimga kiring va platformadan foydalanishni boshlang." },
-    { number: '02', icon: '📚', title: 'Mavzularni o\'rganing', description: "Tajribali o'qituvchilar va video darslar, nazariy materiallar orqali barcha mavzularni o'rganing." },
-    { number: '03', icon: '🎯', title: 'Testlarni ishlang', description: "Mavzulashtirilgan va random testlarni ishlab, bilimingizni mustahkamlang." },
-    { number: '04', icon: '🏆', title: 'Imtihonni topshiring', description: "Tayyorgarlik ko'rib, ishonch bilan rasmiy imtihondan muvaffaqqiyatli o'ting!" },
-  ];
+  protected readonly steps = computed(() =>
+    this.translate
+      .array<{ title: string; description: string }>('landing.steps.items')
+      .map((item, i) => ({ ...item, number: STEP_NUMBERS[i], icon: STEP_ICONS[i] })),
+  );
 
-  readonly testimonials: Testimonial[] = [
-    {
-      initials: 'NK',
-      name: 'Nodira Karimova',
-      role: 'Talaba, 22 yosh',
-      quote: "Avtotez Guliston platformasi juda qulay va tushunarli. Mavzulashtirilgan testlar orqali barcha mavzularni yaxshi o'rgandim. Birinchi urinishdayoq imtihondan o'tdim!",
-    },
-    {
-      initials: 'JQ',
-      name: 'Jasur Qodirov',
-      role: 'Talaba, 24 yosh',
-      quote: "Bilet-bilet mashq qilish imkoniyati eng foydalisi bo'ldi. Xatolarim bo'yicha izohlar juda tushunarli edi.",
-    },
-    {
-      initials: 'MS',
-      name: 'Malika Saidova',
-      role: "O'quvchi, 19 yosh",
-      quote: "Chalg'ituvchi savollar bo'limi ayni kerak bo'lgan narsa edi. Endi shunga o'xshash savollarga tayyorman.",
-    },
-  ];
+  protected readonly testimonials = computed(() =>
+    this.translate
+      .array<{ name: string; role: string; quote: string }>('landing.testimonials.items')
+      .map((item, i) => ({ ...item, initials: TESTIMONIAL_INITIALS[i] })),
+  );
 
   readonly currentTestimonial = signal(0);
 
   nextTestimonial(): void {
-    this.currentTestimonial.update((i) => (i + 1) % this.testimonials.length);
+    this.currentTestimonial.update((i) => (i + 1) % this.testimonials().length);
   }
 
   prevTestimonial(): void {
     this.currentTestimonial.update(
-      (i) => (i - 1 + this.testimonials.length) % this.testimonials.length,
+      (i) => (i - 1 + this.testimonials().length) % this.testimonials().length,
     );
   }
 
@@ -207,8 +116,8 @@ export class Landing implements AfterViewInit {
     this.currentTestimonial.set(index);
   }
 
+  protected readonly contactAddress = computed(() => this.translate.t('landing.contact.address'));
   // TODO: haqiqiy aloqa ma'lumotlari bilan almashtirish kerak
-  readonly contactAddress = "Guliston shahri";
   readonly contactPhones = ['+998 90 236 19 90'];
   readonly contactEmails = ['info@avtotezguliston.uz', 'support@avtotezguliston.uz'];
 
@@ -218,28 +127,69 @@ export class Landing implements AfterViewInit {
     { label: 'Telegram', icon: '✈️', href: '#' },
   ];
 
-  readonly footerColumns: FooterColumn[] = [
+  readonly contactFormName = signal('');
+  readonly contactFormPhone = signal('');
+  readonly contactFormMessage = signal('');
+  readonly contactFormSubmitting = signal(false);
+  readonly contactFormError = signal<string | null>(null);
+  readonly contactFormSent = signal(false);
+
+  submitContactForm(): void {
+    if (!this.contactFormName().trim() || !this.contactFormPhone().trim() || !this.contactFormMessage().trim()) {
+      this.contactFormError.set("Barcha maydonlarni to'ldiring.");
+      return;
+    }
+
+    this.contactFormSubmitting.set(true);
+    this.contactFormError.set(null);
+
+    this.contactMessagesApi
+      .submit({
+        fullName: this.contactFormName().trim(),
+        phone: normalizePhone(this.contactFormPhone()),
+        message: this.contactFormMessage().trim(),
+      })
+      .subscribe({
+        next: () => {
+          this.contactFormSubmitting.set(false);
+          this.contactFormSent.set(true);
+          this.contactFormName.set('');
+          this.contactFormPhone.set('');
+          this.contactFormMessage.set('');
+        },
+        error: (err) => {
+          this.contactFormSubmitting.set(false);
+          this.contactFormError.set(
+            err?.error?.message ?? "Xabarni yuborib bo'lmadi. Qaytadan urinib ko'ring.",
+          );
+        },
+      });
+  }
+
+  protected readonly ctaChecklist = computed(() => this.translate.array<string>('landing.cta.checklist'));
+
+  protected readonly footerColumns = computed(() => [
     {
-      title: 'Tezkor havolalar',
+      title: this.translate.t('landing.footer.columns.quickLinks'),
       links: [
-        { label: 'Asosiy', route: '/', fragment: 'home' },
-        { label: 'Testlar', route: '/tests' },
-        { label: 'Video darslar', route: '/', fragment: 'platform' },
+        { label: this.translate.t('nav.home'), route: '/', fragment: 'home' },
+        { label: this.translate.t('nav.tests'), route: '/tests' },
+        { label: this.translate.t('landing.footer.videoLessons'), route: '/', fragment: 'platform' },
       ],
     },
     {
-      title: 'Kompaniya',
+      title: this.translate.t('landing.footer.columns.company'),
       links: [
-        { label: 'Biz haqimizda', route: '/', fragment: 'why-us' },
-        { label: 'Natijalar', route: '/', fragment: 'testimonials' },
+        { label: this.translate.t('nav.aboutUs'), route: '/', fragment: 'why-us' },
+        { label: this.translate.t('nav.results'), route: '/', fragment: 'testimonials' },
       ],
     },
     {
-      title: "Qo'llab-quvvatlash",
+      title: this.translate.t('landing.footer.columns.support'),
       links: [
-        { label: 'Kontakt', route: '/', fragment: 'contact' },
-        { label: 'Kirish', route: '/login' },
+        { label: this.translate.t('nav.contact'), route: '/', fragment: 'contact' },
+        { label: this.translate.t('common.login'), route: '/login' },
       ],
     },
-  ];
+  ]);
 }

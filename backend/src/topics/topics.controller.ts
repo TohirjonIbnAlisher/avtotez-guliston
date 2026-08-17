@@ -7,16 +7,19 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { TopicsService } from './topics.service';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
+import { SuperAdminGuard } from '../auth/superadmin.guard';
 
 @Controller('topics')
 export class TopicsController {
   constructor(private readonly topicsService: TopicsService) {}
 
   @Post()
+  @UseGuards(SuperAdminGuard)
   create(@Body() createTopicDto: CreateTopicDto) {
     return this.topicsService.create(createTopicDto);
   }
@@ -32,6 +35,7 @@ export class TopicsController {
   }
 
   @Patch(':id')
+  @UseGuards(SuperAdminGuard)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateTopicDto: UpdateTopicDto,
@@ -40,6 +44,7 @@ export class TopicsController {
   }
 
   @Delete(':id')
+  @UseGuards(SuperAdminGuard)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.topicsService.remove(id);
   }
