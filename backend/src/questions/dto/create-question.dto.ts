@@ -42,5 +42,11 @@ export class CreateQuestionDto {
 
   @IsOptional()
   @IsUUID()
-  topicId?: string;
+  topicId?: string | null;
+
+  /** Mavzu ichidagi o'rni (1 dan). Berilmasa — mavzu oxiriga qo'yiladi. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  topicOrder?: number;
 }

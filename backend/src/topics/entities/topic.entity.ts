@@ -12,6 +12,12 @@ export class Topic {
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  category: string | null;
+
+  @Column({ type: 'int', default: 0 })
+  sortOrder: number;
+
   @OneToMany(() => Question, (question) => question.topic)
   questions: Question[];
 }

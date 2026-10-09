@@ -7,6 +7,7 @@ import { Topic } from '../models/question.model';
 export interface TopicPayload {
   name: string;
   description?: string;
+  category?: string;
 }
 
 @Injectable({ providedIn: 'root' })

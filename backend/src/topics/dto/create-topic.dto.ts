@@ -8,4 +8,8 @@ export class CreateTopicDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
 }

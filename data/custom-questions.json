@@ -1,0 +1,167 @@
+[
+  {
+    "sourceId": 10001,
+    "topic": "Tik chiziqlar",
+    "image": "/media/questions/custom/tik-2-1-kopirik-ustuni.svg",
+    "correctOptionIndex": 1,
+    "text": {
+      "uz": "Bu yo'l chizig'i nimani bildiradi?",
+      "uzk": "Бу йўл чизиғи нимани билдиради?",
+      "ru": "Что обозначает эта разметка?"
+    },
+    "options": {
+      "uz": [
+        "Harakatlanish tezligi 40 km/soatgacha cheklangan qismini",
+        "Yo'l inshootlarining harakatdagi transport vositalariga xavf tug'diradigan tik tasmalarini",
+        "Yo'llar ostin-ustun o'tadigan chorrahalarni"
+      ],
+      "uzk": [
+        "Ҳаракатланиш тезлиги 40 км/соатгача чекланган қисмини",
+        "Йўл иншоотларининг ҳаракатдаги транспорт воситаларига хавф туғдирадиган тик тасмаларини",
+        "Йўллар остин-устун ўтадиган чорраҳаларни"
+      ],
+      "ru": [
+        "Участок, на котором скорость движения ограничена до 40 км/ч",
+        "Вертикальные элементы дорожных сооружений, представляющие опасность для движущихся транспортных средств",
+        "Пересечения дорог в разных уровнях"
+      ]
+    },
+    "explanation": {
+      "uz": "YHQ 2-ilovasi 2-bo'limidagi 2.1 tik chizig'i harakatlanayotgan transport vositalariga xavf tug'diradigan yo'l inshootlarining tik elementlarini (ko'priklar, yo'l o'tkazgich va estakadalar ustunlari va h.k.) bildiradi.",
+      "uzk": "ЙҲҚ 2-иловаси 2-бўлимидаги 2.1 тик чизиғи ҳаракатланаётган транспорт воситаларига хавф туғдирадиган йўл иншоотларининг тик элементларини (кўприклар, йўл ўтказгич ва эстакадалар устунлари ва ҳ.к.) билдиради.",
+      "ru": "Вертикальная разметка 2.1 (раздел 2 приложения 2 к ПДД) обозначает вертикальные элементы дорожных сооружений (опоры мостов, путепроводов, эстакад и т. п.), представляющие опасность для движущихся транспортных средств."
+    }
+  },
+  {
+    "sourceId": 10002,
+    "topic": "Tik chiziqlar",
+    "image": "/media/questions/custom/tik-2-6-namuna.svg",
+    "correctOptionIndex": 0,
+    "text": {
+      "uz": "Bu tik yo'l chizig'i nimani bildiradi?",
+      "uzk": "Бу тик йўл чизиғи нимани билдиради?",
+      "ru": "Что обозначает эта вертикальная разметка?"
+    },
+    "options": {
+      "uz": [
+        "Yo'lning boshqa qismlarida yo'l chetidagi to'siqlarning yon chegarasini belgilaydi",
+        "Xavfli yo'l qismlarida bordyurlarni belgilaydi",
+        "Yo'lning xavfli joylaridagi harakatlanish tasmasi chegarasini bildiradi",
+        "Yo'naltiruvchi ustunchalar, beton yoki temir-beton ustunchalar, to'siq ustunchalari va shunga o'xshashlarni belgilaydi"
+      ],
+      "uzk": [
+        "Йўлнинг бошқа қисмларида йўл четидаги тўсиқларнинг ён чегарасини белгилайди",
+        "Хавфли йўл қисмларида бордюрларни белгилайди",
+        "Йўлнинг хавфли жойларидаги ҳаракатланиш тасмаси чегарасини билдиради",
+        "Йўналтирувчи устунчалар, бетон ёки темир-бетон устунчалар, тўсиқ устунчалари ва шунга ўхшашларни белгилайди"
+      ],
+      "ru": [
+        "Боковые поверхности дорожных ограждений на других участках дороги",
+        "Бордюры на опасных участках дороги",
+        "Границу полосы движения на опасных участках дороги",
+        "Направляющие столбики, бетонные или железобетонные столбики, опоры ограждений и т. п."
+      ]
+    },
+    "explanation": {
+      "uz": "YHQ 2-ilovasi 2-bo'limidagi 2.6 tik chizig'i boshqa joylardagi to'siqlarning yon yuzalarini bildiradi. Xavfli joylardagi to'siqlar uchun 2.5 chizig'i qo'llaniladi.",
+      "uzk": "ЙҲҚ 2-иловаси 2-бўлимидаги 2.6 тик чизиғи бошқа жойлардаги тўсиқларнинг ён юзаларини билдиради. Хавфли жойлардаги тўсиқлар учун 2.5 чизиғи қўлланилади.",
+      "ru": "Вертикальная разметка 2.6 (раздел 2 приложения 2 к ПДД) обозначает боковые поверхности ограждений на других участках дороги. Для ограждений на опасных участках применяется разметка 2.5."
+    }
+  },
+  {
+    "sourceId": 10003,
+    "topic": "Tik chiziqlar",
+    "image": "/media/questions/custom/tik-2-6-yol-tosigi.svg",
+    "correctOptionIndex": 0,
+    "text": {
+      "uz": "Mazkur tik chiziqlar nimani anglatadi?",
+      "uzk": "Мазкур тик чизиқлар нимани англатади?",
+      "ru": "Что означает данная вертикальная разметка?"
+    },
+    "options": {
+      "uz": [
+        "Boshqa joylardagi to'siqlarning yon yuzalarini bildiradi",
+        "Yo'lning kichik radiusli burilishlarida yo'l chetiga o'rnatilgan to'siqlarning yon yuzalarini bildiradi"
+      ],
+      "uzk": [
+        "Бошқа жойлардаги тўсиқларнинг ён юзаларини билдиради",
+        "Йўлнинг кичик радиусли бурилишларида йўл четига ўрнатилган тўсиқларнинг ён юзаларини билдиради"
+      ],
+      "ru": [
+        "Боковые поверхности ограждений на других участках",
+        "Боковые поверхности ограждений, установленных на обочине на закруглениях дороги малого радиуса"
+      ]
+    },
+    "explanation": {
+      "uz": "YHQ 2-ilovasi 2-bo'limidagi 2.6 tik chizig'i boshqa joylardagi to'siqlarning yon yuzalarini bildiradi. Kichik radiusli burilishlardagi to'siqlar 2.5 chizig'i bilan belgilanadi.",
+      "uzk": "ЙҲҚ 2-иловаси 2-бўлимидаги 2.6 тик чизиғи бошқа жойлардаги тўсиқларнинг ён юзаларини билдиради. Кичик радиусли бурилишлардаги тўсиқлар 2.5 чизиғи билан белгиланади.",
+      "ru": "Вертикальная разметка 2.6 (раздел 2 приложения 2 к ПДД) обозначает боковые поверхности ограждений на других участках. Ограждения на закруглениях малого радиуса обозначаются разметкой 2.5."
+    }
+  },
+  {
+    "sourceId": 10004,
+    "topic": "Tik chiziqlar",
+    "image": "/media/questions/custom/tik-2-5-namuna.svg",
+    "correctOptionIndex": 1,
+    "text": {
+      "uz": "Ushbu tik chiziq nimani bildiradi?",
+      "uzk": "Ушбу тик чизиқ нимани билдиради?",
+      "ru": "Что обозначает эта вертикальная разметка?"
+    },
+    "options": {
+      "uz": [
+        "Temir yo'l kesishmasiga yaqinlashganlik haqida",
+        "Yo'lning kichik radiusli burilish, tik nishablik va boshqa xavfli joylarida yo'l to'siqlarining yon yuzalarini bildiradi",
+        "Xavfli chorrahaga yaqinlashganlik haqida"
+      ],
+      "uzk": [
+        "Темир йўл кесишмасига яқинлашганлик ҳақида",
+        "Йўлнинг кичик радиусли бурилиш, тик нишаблик ва бошқа хавфли жойларида йўл тўсиқларининг ён юзаларини билдиради",
+        "Хавфли чорраҳага яқинлашганлик ҳақида"
+      ],
+      "ru": [
+        "О приближении к железнодорожному переезду",
+        "Боковые поверхности дорожных ограждений на закруглениях малого радиуса, крутых спусках и других опасных участках",
+        "О приближении к опасному перекрёстку"
+      ]
+    },
+    "explanation": {
+      "uz": "YHQ 2-ilovasi 2-bo'limidagi 2.5 tik chizig'i yo'lning kichik radiusli burilish, tik nishablik va boshqa xavfli joylarida yo'l to'siqlarining yon yuzalarini bildiradi.",
+      "uzk": "ЙҲҚ 2-иловаси 2-бўлимидаги 2.5 тик чизиғи йўлнинг кичик радиусли бурилиш, тик нишаблик ва бошқа хавфли жойларида йўл тўсиқларининг ён юзаларини билдиради.",
+      "ru": "Вертикальная разметка 2.5 (раздел 2 приложения 2 к ПДД) обозначает боковые поверхности дорожных ограждений на закруглениях малого радиуса, крутых спусках и других опасных участках."
+    }
+  },
+  {
+    "sourceId": 10005,
+    "topic": "Tik chiziqlar",
+    "image": "/media/questions/custom/tik-2-5-burilish-tosigi.svg",
+    "correctOptionIndex": 2,
+    "text": {
+      "uz": "Yo'l to'sig'iga chizilgan tik chiziq nimani bildiradi?",
+      "uzk": "Йўл тўсиғига чизилган тик чизиқ нимани билдиради?",
+      "ru": "Что обозначает вертикальная разметка, нанесённая на дорожное ограждение?"
+    },
+    "options": {
+      "uz": [
+        "Temir yo'l kesishmasiga yaqinlashganlik haqida",
+        "Xavfli chorrahaga yaqinlashganlik haqida",
+        "Yo'lning kichik radiusli burilish, tik nishablik va boshqa xavfli joylarda yo'l to'siqlarining yon yuzalarini bildiradi"
+      ],
+      "uzk": [
+        "Темир йўл кесишмасига яқинлашганлик ҳақида",
+        "Хавфли чорраҳага яқинлашганлик ҳақида",
+        "Йўлнинг кичик радиусли бурилиш, тик нишаблик ва бошқа хавфли жойларда йўл тўсиқларининг ён юзаларини билдиради"
+      ],
+      "ru": [
+        "О приближении к железнодорожному переезду",
+        "О приближении к опасному перекрёстку",
+        "Боковые поверхности дорожных ограждений на закруглениях малого радиуса, крутых спусках и других опасных участках"
+      ]
+    },
+    "explanation": {
+      "uz": "YHQ 2-ilovasi 2-bo'limidagi 2.5 tik chizig'i yo'lning kichik radiusli burilish, tik nishablik va boshqa xavfli joylarida yo'l to'siqlarining yon yuzalarini bildiradi.",
+      "uzk": "ЙҲҚ 2-иловаси 2-бўлимидаги 2.5 тик чизиғи йўлнинг кичик радиусли бурилиш, тик нишаблик ва бошқа хавфли жойларида йўл тўсиқларининг ён юзаларини билдиради.",
+      "ru": "Вертикальная разметка 2.5 (раздел 2 приложения 2 к ПДД) обозначает боковые поверхности дорожных ограждений на закруглениях малого радиуса, крутых спусках и других опасных участках."
+    }
+  }
+]

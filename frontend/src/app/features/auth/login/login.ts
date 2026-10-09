@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LogoMark } from '../../../shared/logo-mark/logo-mark';
 import { TranslateService } from '../../../core/services/translate.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -12,6 +12,7 @@ import { normalizePhone } from '../../../core/utils/phone.util';
 })
 export class Login {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
   protected readonly translate = inject(TranslateService);
 
@@ -20,6 +21,14 @@ export class Login {
   readonly showPassword = signal(false);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  /** Avtomatik chiqish sababi (?reason=idle|expired). */
+  readonly notice = signal<string | null>(this.reasonNotice(this.route.snapshot.queryParamMap.get('reason')));
+
+  private reasonNotice(reason: string | null): string | null {
+    if (reason === 'idle') return this.translate.t('login.sessionIdle');
+    if (reason === 'expired') return this.translate.t('login.sessionExpired');
+    return null;
+  }
 
   togglePasswordVisibility(): void {
     this.showPassword.update((v) => !v);
@@ -33,6 +42,7 @@ export class Login {
 
     this.loading.set(true);
     this.error.set(null);
+    this.notice.set(null);
 
     this.auth.login(normalizePhone(this.phone()), this.password()).subscribe({
       next: () => {

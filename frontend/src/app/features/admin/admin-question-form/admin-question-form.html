@@ -20,7 +20,7 @@
       <label class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Mavzu</label>
       <select
         [value]="topicId()"
-        (change)="topicId.set($any($event.target).value)"
+        (change)="selectTopic($any($event.target).value)"
         class="w-full max-w-sm rounded-xl border-2 border-slate-200 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
       >
         <option value="">— Mavzusiz —</option>
@@ -28,6 +28,28 @@
           <option [value]="topic.id">{{ topic.name }}</option>
         }
       </select>
+
+      @if (topicId()) {
+        <label class="mt-4 mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Mavzudagi tartib raqami</label>
+        <div class="flex flex-wrap items-center gap-3">
+          <input
+            type="number"
+            min="1"
+            [attr.max]="maxPosition()"
+            [value]="topicOrder()"
+            (input)="topicOrder.set($any($event.target).value)"
+            placeholder="oxiriga"
+            class="w-32 rounded-xl border-2 border-slate-200 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+          <span class="text-sm text-slate-500 dark:text-slate-400">
+            @if (maxPosition() === null) {
+              Mavzudagi savollar soni yuklanmoqda...
+            } @else {
+              1 – {{ maxPosition() }}. Bo'sh qoldirilsa, mavzu oxiriga qo'yiladi; shu o'rindagi va keyingi savollar bittaga suriladi.
+            }
+          </span>
+        </div>
+      }
 
       <h2 class="mt-6 text-base font-bold text-slate-900 dark:text-white">Savol matni</h2>
       <div class="mt-2 grid grid-cols-1 gap-4">

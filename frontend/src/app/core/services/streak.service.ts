@@ -1,7 +1,13 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { tap } from 'rxjs';
 import { AuthService } from './auth.service';
+import { ProgressApiService } from './progress-api.service';
+import { ServerSync } from '../utils/server-sync';
 
+// localStorage faqat mehmon uchun; login qilgan foydalanuvchining faol kunlari serverda.
 const STORAGE_KEY = 'avtotez-guliston-activity-dates';
+const GUEST_SCOPE = 'guest';
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function dateKey(date: Date): string {
   const y = date.getFullYear();
@@ -35,6 +41,12 @@ function writeDates(key: string, dates: Set<string>): void {
 @Injectable({ providedIn: 'root' })
 export class StreakService {
   private readonly auth = inject(AuthService);
+  private readonly api = inject(ProgressApiService);
+  private readonly sync = new ServerSync<string[]>(
+    () => this.api.getActivityDays(),
+    (days) => this.datesSignal.set(new Set(days)),
+  );
+  private userId: string | null = null;
   private readonly datesSignal = signal<Set<string>>(new Set());
 
   readonly streakDays = computed(() => {
@@ -60,13 +72,41 @@ export class StreakService {
   });
 
   constructor() {
+    // Birinchi holat darhol o'rnatiladi: effect kechroq ishlaydi, komponent esa konstruktorida
+    // servis metodini chaqirishi mumkin (masalan, dashboard'dagi recordToday).
+    this.switchUser(this.auth.currentUser()?.id ?? null);
     effect(() => {
-      this.datesSignal.set(readDates(this.storageKey()));
+      const userId = this.auth.currentUser()?.id ?? null;
+      untracked(() => {
+        if (userId !== this.userId) {
+          this.switchUser(userId);
+        }
+      });
     });
   }
 
-  private storageKey(): string {
-    return `${STORAGE_KEY}:${this.auth.currentUser()?.id ?? 'guest'}`;
+  private storageKey(scope: string): string {
+    return `${STORAGE_KEY}:${scope}`;
+  }
+
+  private switchUser(userId: string | null): void {
+    this.userId = userId;
+    this.sync.setActive(userId !== null);
+
+    if (!userId) {
+      this.datesSignal.set(readDates(this.storageKey(GUEST_SCOPE)));
+      return;
+    }
+
+    this.datesSignal.set(new Set());
+    const legacyKey = this.storageKey(userId);
+    const legacy = [...readDates(legacyKey)].filter((d) => DAY_PATTERN.test(d));
+    if (legacy.length) {
+      this.sync.write(
+        this.api.importActivityDays(legacy).pipe(tap(() => localStorage.removeItem(legacyKey))),
+      );
+    }
+    this.sync.load();
   }
 
   recordToday(): void {
@@ -77,6 +117,11 @@ export class StreakService {
     const next = new Set(this.datesSignal());
     next.add(today);
     this.datesSignal.set(next);
-    writeDates(this.storageKey(), next);
+
+    if (this.userId) {
+      this.sync.write(this.api.addActivityDay(today));
+    } else {
+      writeDates(this.storageKey(GUEST_SCOPE), next);
+    }
   }
 }

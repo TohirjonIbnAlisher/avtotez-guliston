@@ -7,6 +7,7 @@ import { LanguageService, LOCALE_OPTIONS } from './core/services/language.servic
 import { TranslateService } from './core/services/translate.service';
 import { ThemeService } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
+import { SessionService } from './core/services/session.service';
 
 interface NavLink {
   labelKey: string;
@@ -25,6 +26,8 @@ export class App {
   protected readonly translate = inject(TranslateService);
   protected readonly theme = inject(ThemeService);
   protected readonly auth = inject(AuthService);
+  // Faolsizlik bo'yicha chiqish va token yangilash ilova ishga tushishi bilan boshlanadi.
+  private readonly session = inject(SessionService);
   protected readonly localeOptions = LOCALE_OPTIONS;
 
   protected readonly title = signal('frontend');

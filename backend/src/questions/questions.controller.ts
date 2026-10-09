@@ -4,6 +4,8 @@ import {
   Post,
   Body,
   Patch,
+  Put,
+  HttpCode,
   Param,
   Delete,
   Query,
@@ -22,6 +24,7 @@ import { randomUUID } from 'crypto';
 import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
+import { ReorderQuestionsDto } from './dto/reorder-questions.dto';
 import { DEFAULT_LOCALE, isLocale, Locale } from './locale';
 import { SuperAdminGuard } from '../auth/superadmin.guard';
 
@@ -62,6 +65,14 @@ export class QuestionsController {
       throw new BadRequestException('Fayl yuborilmadi.');
     }
     return { imageUrl: `/media/questions/${file.filename}` };
+  }
+
+  // Mavzu ichidagi savollar tartibini saqlash (admin panelidagi ▲▼).
+  @Put('order')
+  @HttpCode(204)
+  @UseGuards(SuperAdminGuard)
+  reorder(@Body() dto: ReorderQuestionsDto) {
+    return this.questionsService.reorder(dto.topicId, dto.questionIds);
   }
 
   @Get()

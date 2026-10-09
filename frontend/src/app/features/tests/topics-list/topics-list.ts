@@ -10,6 +10,11 @@ interface TopicTile {
   count: number;
 }
 
+interface TopicGroup {
+  category: string | null;
+  tiles: TopicTile[];
+}
+
 @Component({
   selector: 'app-topics-list',
   imports: [RouterLink],
@@ -34,10 +39,22 @@ export class TopicsList {
     });
   }
 
-  readonly tiles = computed<TopicTile[]>(() => {
+  readonly groups = computed<TopicGroup[]>(() => {
     const query = this.search().trim().toLowerCase();
-    return this.topics()
+    const tiles = this.topics()
       .map((topic) => ({ topic, count: this.store.byTopic(topic.id).length }))
       .filter((tile) => !query || tile.topic.name.toLowerCase().includes(query));
+
+    const groups: TopicGroup[] = [];
+    for (const tile of tiles) {
+      const category = tile.topic.category;
+      const last = groups[groups.length - 1];
+      if (last && last.category === category) {
+        last.tiles.push(tile);
+      } else {
+        groups.push({ category, tiles: [tile] });
+      }
+    }
+    return groups;
   });
 }

@@ -21,7 +21,7 @@ async function run() {
   const app = await NestFactory.createApplicationContext(AppModule);
   const usersRepo = app.get<Repository<User>>(getRepositoryToken(User));
 
-  const password = generatePassword();
+  const password = process.env.ADMIN_PASSWORD || generatePassword();
   const passwordHash = await bcrypt.hash(password, 10);
 
   const existing = await usersRepo.findOne({ where: { phone: PHONE } });

@@ -7,9 +7,10 @@ interface TopicFormState {
   id: string | null;
   name: string;
   description: string;
+  category: string;
 }
 
-const EMPTY_FORM: TopicFormState = { id: null, name: '', description: '' };
+const EMPTY_FORM: TopicFormState = { id: null, name: '', description: '', category: '' };
 
 @Component({
   selector: 'app-admin-topics',
@@ -50,7 +51,12 @@ export class AdminTopics {
   }
 
   openEdit(topic: Topic): void {
-    this.form.set({ id: topic.id, name: topic.name, description: topic.description ?? '' });
+    this.form.set({
+      id: topic.id,
+      name: topic.name,
+      description: topic.description ?? '',
+      category: topic.category ?? '',
+    });
     this.formOpen.set(true);
   }
 
@@ -73,7 +79,11 @@ export class AdminTopics {
     this.saving.set(true);
     this.error.set(null);
 
-    const payload = { name: f.name, description: f.description || undefined };
+    const payload = {
+      name: f.name,
+      description: f.description || undefined,
+      category: f.category || undefined,
+    };
     const request = f.id ? this.topicsApi.update(f.id, payload) : this.topicsApi.create(payload);
 
     request.subscribe({

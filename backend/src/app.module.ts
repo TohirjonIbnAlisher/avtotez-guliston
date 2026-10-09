@@ -11,6 +11,11 @@ import { TicketsModule } from './tickets/tickets.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
+import { ProgressModule, PROGRESS_ENTITIES } from './progress/progress.module';
+import { RefreshToken } from './auth/entities/refresh-token.entity';
+import { CreateUserProgress1760000000000 } from './migrations/1760000000000-CreateUserProgress';
+import { AddQuestionTopicOrder1760100000000 } from './migrations/1760100000000-AddQuestionTopicOrder';
+import { CreateRefreshTokens1760200000000 } from './migrations/1760200000000-CreateRefreshTokens';
 import { Question } from './questions/entities/question.entity';
 import { Topic } from './topics/entities/topic.entity';
 import { Ticket } from './tickets/entities/ticket.entity';
@@ -44,8 +49,15 @@ import { ContactMessage } from './contact-messages/entities/contact-message.enti
                 password: config.get<string>('DB_PASSWORD', 'postgres'),
                 database: config.get<string>('DB_NAME', 'avtotez_guliston'),
               }),
-          entities: [Question, Topic, Ticket, User, ContactMessage],
+          entities: [Question, Topic, Ticket, User, ContactMessage, RefreshToken, ...PROGRESS_ENTITIES],
           synchronize: config.get<string>('NODE_ENV', 'development') !== 'production',
+          // Production'da yangi jadvallar faqat migration orqali yaratiladi — ilova ishga tushganda avtomatik bajariladi.
+          migrations: [
+            CreateUserProgress1760000000000,
+            AddQuestionTopicOrder1760100000000,
+            CreateRefreshTokens1760200000000,
+          ],
+          migrationsRun: true,
           ssl,
         };
       },
@@ -56,6 +68,7 @@ import { ContactMessage } from './contact-messages/entities/contact-message.enti
     UsersModule,
     AuthModule,
     ContactMessagesModule,
+    ProgressModule,
   ],
   controllers: [AppController],
   providers: [AppService],

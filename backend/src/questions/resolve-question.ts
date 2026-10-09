@@ -12,6 +12,7 @@ export interface ResolvedQuestion {
   isTricky: boolean;
   isNumberRelated: boolean;
   topic: Question['topic'];
+  topicOrder: number | null;
 }
 
 export function resolveQuestion(question: Question, lang: Locale): ResolvedQuestion {
@@ -28,5 +29,6 @@ export function resolveQuestion(question: Question, lang: Locale): ResolvedQuest
     isTricky: question.isTricky,
     isNumberRelated: question.isNumberRelated,
     topic: question.topic,
+    topicOrder: question.topicOrder,
   };
 }

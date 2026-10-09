@@ -37,6 +37,16 @@
           />
         </div>
         <div>
+          <label class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Kategoriya (ixtiyoriy)</label>
+          <input
+            type="text"
+            [value]="form().category"
+            (input)="updateField('category', $any($event.target).value)"
+            placeholder="Masalan: Yo'l belgilari"
+            class="w-full rounded-xl border-2 border-slate-200 px-3 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
+        <div>
           <label class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Tavsif (ixtiyoriy)</label>
           <textarea
             rows="3"
@@ -69,7 +79,14 @@
       @for (topic of topics(); track topic.id) {
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
           <div class="flex items-start justify-between gap-2">
-            <h3 class="font-bold text-slate-900 dark:text-white">{{ topic.name }}</h3>
+            <div>
+              @if (topic.category) {
+                <div class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  {{ topic.category }}
+                </div>
+              }
+              <h3 class="font-bold text-slate-900 dark:text-white">{{ topic.name }}</h3>
+            </div>
           </div>
           @if (topic.description) {
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ topic.description }}</p>

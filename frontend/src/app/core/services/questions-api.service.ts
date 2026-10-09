@@ -44,6 +44,11 @@ export class QuestionsApiService {
     return this.http.patch(`${this.baseUrl}/${id}`, payload);
   }
 
+  /** Mavzudagi savollar tartibini saqlash — `questionIds` yangi tartibda, mavzudagi barcha savollar. */
+  reorder(topicId: string, questionIds: string[]): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/order`, { topicId, questionIds });
+  }
+
   remove(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }

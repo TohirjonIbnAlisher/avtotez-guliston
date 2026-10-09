@@ -34,6 +34,20 @@ export class AdminQuestionForm {
 
   readonly topics = signal<Topic[]>([]);
   readonly topicId = signal('');
+  /** Kiritilgan tartib raqami (matn ko'rinishida); bo'sh — mavzu oxiriga. */
+  readonly topicOrder = signal('');
+  /** Tanlangan mavzudagi savollar soni (null — yuklanmoqda). */
+  readonly topicCount = signal<number | null>(null);
+  private originalTopicId = '';
+  private originalTopicOrder: number | null = null;
+  /** Savol shu mavzuga yangi qo'shilsa, bitta qo'shimcha o'rin bo'ladi. */
+  readonly maxPosition = computed(() => {
+    const count = this.topicCount();
+    if (count === null) {
+      return null;
+    }
+    return this.isEdit && this.topicId() === this.originalTopicId ? count : count + 1;
+  });
   readonly text = signal<Record<LangKey, string>>({ uz: '', uzk: '', ru: '' });
   readonly options = signal<OptionRow[]>([
     { uz: '', uzk: '', ru: '' },
@@ -73,7 +87,11 @@ export class AdminQuestionForm {
           })),
         );
         this.correctIndex.set(uz.correctOptionIndex);
-        this.topicId.set(uz.topic?.id ?? '');
+        this.originalTopicId = uz.topic?.id ?? '';
+        this.originalTopicOrder = uz.topicOrder;
+        this.topicId.set(this.originalTopicId);
+        this.topicOrder.set(uz.topicOrder ? String(uz.topicOrder) : '');
+        this.loadTopicCount(this.originalTopicId);
         this.existingImageUrl.set(uz.imageUrl);
         this.loading.set(false);
       },
@@ -82,6 +100,44 @@ export class AdminQuestionForm {
         this.loading.set(false);
       },
     });
+  }
+
+  selectTopic(topicId: string): void {
+    this.topicId.set(topicId);
+    // asl mavzuga qaytilsa — asl o'rni, boshqa mavzuda — oxiriga (bo'sh)
+    this.topicOrder.set(
+      this.isEdit && topicId === this.originalTopicId && this.originalTopicOrder
+        ? String(this.originalTopicOrder)
+        : '',
+    );
+    this.loadTopicCount(topicId);
+  }
+
+  private loadTopicCount(topicId: string): void {
+    this.topicCount.set(null);
+    if (!topicId) {
+      return;
+    }
+    this.questionsApi.findAll(topicId).subscribe({
+      next: (questions) => {
+        if (this.topicId() === topicId) {
+          this.topicCount.set(questions.length);
+        }
+      },
+    });
+  }
+
+  private parsedTopicOrder(): number | null | 'invalid' {
+    const raw = this.topicOrder().trim();
+    if (!raw) {
+      return null;
+    }
+    const value = Number(raw);
+    const max = this.maxPosition();
+    if (!Number.isInteger(value) || value < 1 || (max !== null && value > max)) {
+      return 'invalid';
+    }
+    return value;
   }
 
   updateText(lang: LangKey, value: string): void {
@@ -132,6 +188,11 @@ export class AdminQuestionForm {
       return;
     }
 
+    if (this.topicId() && this.parsedTopicOrder() === 'invalid') {
+      this.error.set(`Mavzudagi tartib raqami 1 dan ${this.maxPosition() ?? '…'} gacha bo'lishi kerak.`);
+      return;
+    }
+
     this.saving.set(true);
     this.error.set(null);
 
@@ -159,6 +220,7 @@ export class AdminQuestionForm {
       correctOptionIndex: this.correctIndex(),
       imageUrl,
       topicId: this.topicId() || null,
+      topicOrder: this.topicId() ? (this.parsedTopicOrder() as number | null) : null,
     };
 
     const request = this.questionId

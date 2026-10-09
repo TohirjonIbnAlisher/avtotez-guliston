@@ -4,7 +4,37 @@
       @if (title()) {
         <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ title() }}</h2>
       }
-      <div class="ml-auto flex items-center gap-3">
+      <div class="ml-auto flex flex-wrap items-center gap-3">
+        <div
+          class="flex items-center gap-2 rounded-lg bg-slate-100 py-1 pr-1 pl-3 text-sm font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          [title]="translate.t('testRunner.autoAdvanceHint')"
+        >
+          <span>{{ translate.t('testRunner.autoAdvance') }}</span>
+          <div class="flex rounded-md bg-white p-0.5 dark:bg-slate-900" role="radiogroup" [attr.aria-label]="translate.t('testRunner.autoAdvanceHint')">
+            <button
+              type="button"
+              role="radio"
+              class="rounded px-2.5 py-0.5 transition"
+              [attr.aria-checked]="prefs.autoAdvance()"
+              [class.bg-brand-600]="prefs.autoAdvance()"
+              [class.text-white]="prefs.autoAdvance()"
+              (click)="setAutoAdvance(true)"
+            >
+              {{ translate.t('testRunner.yes') }}
+            </button>
+            <button
+              type="button"
+              role="radio"
+              class="rounded px-2.5 py-0.5 transition"
+              [attr.aria-checked]="!prefs.autoAdvance()"
+              [class.bg-slate-600]="!prefs.autoAdvance()"
+              [class.text-white]="!prefs.autoAdvance()"
+              (click)="setAutoAdvance(false)"
+            >
+              {{ translate.t('testRunner.no') }}
+            </button>
+          </div>
+        </div>
         @if (allowSave()) {
           <button
             type="button"
@@ -28,26 +58,13 @@
       </div>
     </div>
 
-    <div class="mt-4 flex flex-nowrap gap-1.5 overflow-x-auto pb-1">
+    <div class="mt-4 flex flex-nowrap gap-2 overflow-x-auto p-1">
       @for (q of questions(); track q.id; let i = $index) {
         <button
           type="button"
           (click)="goTo(i)"
-          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold transition"
-          [class.bg-brand-600]="i === currentIndex()"
-          [class.text-white]="i === currentIndex()"
-          [class.bg-emerald-100]="i !== currentIndex() && answers()[q.id] === q.correctOptionIndex"
-          [class.text-emerald-700]="i !== currentIndex() && answers()[q.id] === q.correctOptionIndex"
-          [class.dark:bg-emerald-500/15]="i !== currentIndex() && answers()[q.id] === q.correctOptionIndex"
-          [class.dark:text-emerald-400]="i !== currentIndex() && answers()[q.id] === q.correctOptionIndex"
-          [class.bg-red-100]="i !== currentIndex() && answers()[q.id] !== undefined && answers()[q.id] !== q.correctOptionIndex"
-          [class.text-red-700]="i !== currentIndex() && answers()[q.id] !== undefined && answers()[q.id] !== q.correctOptionIndex"
-          [class.dark:bg-red-500/15]="i !== currentIndex() && answers()[q.id] !== undefined && answers()[q.id] !== q.correctOptionIndex"
-          [class.dark:text-red-400]="i !== currentIndex() && answers()[q.id] !== undefined && answers()[q.id] !== q.correctOptionIndex"
-          [class.bg-slate-100]="i !== currentIndex() && answers()[q.id] === undefined"
-          [class.text-slate-500]="i !== currentIndex() && answers()[q.id] === undefined"
-          [class.dark:bg-slate-800]="i !== currentIndex() && answers()[q.id] === undefined"
-          [class.dark:text-slate-400]="i !== currentIndex() && answers()[q.id] === undefined"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition"
+          [class]="navClass(q, i)"
         >
           {{ i + 1 }}
         </button>
@@ -55,24 +72,24 @@
     </div>
 
     @if (currentQuestion(); as question) {
-      <div class="mt-6">
-        <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ question.text }}</h3>
+      <div class="mt-6 grid gap-x-8 gap-y-5 lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr]">
+        <h3 class="text-xl font-bold text-slate-900 lg:col-start-1 dark:text-white">{{ question.text }}</h3>
 
-        @if (question.imageUrl) {
+        <div class="lg:col-start-2 lg:row-span-3 lg:row-start-1">
           <img
-            class="mt-4 max-w-full cursor-zoom-in rounded-xl"
-            [src]="question.imageUrl"
+            class="w-full cursor-zoom-in rounded-2xl lg:sticky lg:top-24"
+            [src]="imageOf(question)"
             alt=""
             (click)="openImage()"
           />
-        }
+        </div>
 
-        <ul class="mt-5 flex flex-col gap-2.5">
+        <ul class="flex flex-col gap-2.5 lg:col-start-1">
           @for (option of question.options; track $index) {
             <li>
               <button
                 type="button"
-                class="w-full rounded-xl border-2 px-4 py-3 text-left text-base font-medium transition-all duration-150"
+                class="flex w-full items-center gap-3 rounded-xl border-2 px-3 py-3 text-left text-base font-medium transition-all duration-150"
                 [class.border-emerald-600]="optionState($index) === 'correct'"
                 [class.bg-emerald-50]="optionState($index) === 'correct'"
                 [class.text-emerald-800]="optionState($index) === 'correct'"
@@ -90,45 +107,73 @@
                 [class.hover:border-brand-300]="optionState($index) === 'neutral' && !isAnswered()"
                 (click)="selectOption($index)"
               >
-                {{ option }}
+                <span
+                  class="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-md px-1.5 text-xs font-bold"
+                  [class.bg-emerald-600]="optionState($index) === 'correct'"
+                  [class.bg-red-600]="optionState($index) === 'wrong'"
+                  [class.text-white]="optionState($index) !== 'neutral'"
+                  [class.bg-slate-100]="optionState($index) === 'neutral'"
+                  [class.text-slate-500]="optionState($index) === 'neutral'"
+                  [class.dark:bg-slate-800]="optionState($index) === 'neutral'"
+                  [class.dark:text-slate-400]="optionState($index) === 'neutral'"
+                >F{{ $index + 1 }}</span>
+                <span class="flex-1">{{ option }}</span>
+                @if (optionState($index) === 'correct') {
+                  <span class="shrink-0 text-lg font-bold" aria-hidden="true">✓</span>
+                } @else if (optionState($index) === 'wrong') {
+                  <span class="shrink-0 text-lg font-bold" aria-hidden="true">✕</span>
+                }
               </button>
             </li>
           }
         </ul>
 
-        @if (isAnswered() && question.explanation) {
-          <p class="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 italic dark:bg-slate-800/60 dark:text-slate-300">
-            {{ question.explanation }}
-          </p>
-        }
-
-        <div class="mt-6 flex items-center justify-between gap-3">
-          <span class="text-sm text-slate-400 dark:text-slate-500">{{ currentIndex() + 1 }} / {{ questions().length }}</span>
-          @if (!isLastQuestion()) {
-            <button
-              type="button"
-              class="btn-primary"
-              [disabled]="!isAnswered()"
-              (click)="next()"
-            >
-              {{ translate.t('testRunner.nextBtn') }}
-            </button>
-          } @else if (scored()) {
-            <button
-              type="button"
-              class="btn-primary"
-              [disabled]="!isAnswered()"
-              (click)="next()"
-            >
-              {{ translate.t('testRunner.finishBtn') }}
-            </button>
-          } @else if (isAnswered()) {
-            <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ translate.t('testRunner.practiceDone') }}</span>
+        <div class="lg:col-start-1">
+          @if (isAnswered() && question.explanation) {
+            <p class="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 italic dark:bg-slate-800/60 dark:text-slate-300">
+              {{ question.explanation }}
+            </p>
           }
+
+          <div class="mt-6 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              @if (currentIndex() > 0) {
+                <button
+                  type="button"
+                  class="rounded-xl border-2 border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-brand-300 dark:border-slate-700 dark:text-slate-300"
+                  (click)="goTo(currentIndex() - 1)"
+                >
+                  ← {{ translate.t('testRunner.prevBtn') }}
+                </button>
+              }
+              <span class="text-sm text-slate-400 dark:text-slate-500">{{ currentIndex() + 1 }} / {{ questions().length }}</span>
+            </div>
+            @if (!isLastQuestion()) {
+              <button
+                type="button"
+                class="btn-primary"
+                [disabled]="!isAnswered()"
+                (click)="next()"
+              >
+                {{ translate.t('testRunner.nextBtn') }}
+              </button>
+            } @else if (scored()) {
+              <button
+                type="button"
+                class="btn-primary"
+                [disabled]="!isAnswered()"
+                (click)="next()"
+              >
+                {{ translate.t('testRunner.finishBtn') }}
+              </button>
+            } @else if (isAnswered()) {
+              <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ translate.t('testRunner.practiceDone') }}</span>
+            }
+          </div>
         </div>
       </div>
 
-      @if (imageOpen() && question.imageUrl) {
+      @if (imageOpen()) {
         <div
           class="fixed inset-0 z-100 flex items-center justify-center bg-black/90 p-4"
           (click)="closeImage()"
@@ -143,7 +188,7 @@
           </button>
           <img
             class="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl"
-            [src]="question.imageUrl"
+            [src]="imageOf(question)"
             alt=""
             (click)="$event.stopPropagation()"
           />

@@ -30,4 +30,6 @@ export interface AdminQuestionPayload {
   correctOptionIndex: number;
   imageUrl?: string | null;
   topicId?: string | null;
+  /** Mavzu ichidagi o'rni; null — mavzu oxiriga. */
+  topicOrder?: number | null;
 }

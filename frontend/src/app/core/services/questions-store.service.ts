@@ -40,6 +40,8 @@ export class QuestionsStore {
   }
 
   byTopic(topicId: string): Question[] {
-    return this._questions().filter((q) => q.topic?.id === topicId);
+    return this._questions()
+      .filter((q) => q.topic?.id === topicId)
+      .sort((a, b) => (a.topicOrder ?? Infinity) - (b.topicOrder ?? Infinity));
   }
 }

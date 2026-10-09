@@ -1,7 +1,8 @@
-import { Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, HostListener, computed, inject, input, output, signal } from '@angular/core';
 import { Question } from '../../../core/models/question.model';
 import { ProgressService } from '../../../core/services/progress.service';
 import { TestHistoryService } from '../../../core/services/test-history.service';
+import { TestPreferencesService } from '../../../core/services/test-preferences.service';
 import { TranslateService } from '../../../core/services/translate.service';
 
 export type SessionMode = 'exam' | 'practice';
@@ -14,8 +15,11 @@ export interface SessionResult {
 }
 
 const PASS_RATIO = 0.9;
-const AUTO_ADVANCE_DELAY_MS = 900;
+// Avtomatik o'tish faqat to'g'ri javobda: belgilangan javob yashil bo'lib ko'rinishi uchun qisqa pauza.
+const AUTO_ADVANCE_DELAY_MS = 400;
 const SECONDS_PER_QUESTION = 90;
+// Rasmi yo'q savollarda ko'rsatiladigan umumiy rasm (frontend/public/images).
+const DEFAULT_QUESTION_IMAGE = '/images/default-question.webp';
 
 @Component({
   selector: 'app-test-session',
@@ -26,6 +30,7 @@ export class TestSession {
   private readonly progress = inject(ProgressService);
   private readonly testHistory = inject(TestHistoryService);
   protected readonly translate = inject(TranslateService);
+  protected readonly prefs = inject(TestPreferencesService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly questions = input.required<Question[]>();
@@ -140,9 +145,67 @@ export class TestSession {
     this.answers.update((a) => ({ ...a, [q.id]: optionIndex }));
     this.progress.recordAnswer(q.id, isCorrect, optionIndex);
 
-    if (isCorrect && !this.isLastQuestion()) {
+    // Xato javobda o'tmaydi — foydalanuvchi to'g'ri javob va izohni ko'rib, o'zi davom ettiradi.
+    if (isCorrect && this.prefs.autoAdvance() && !this.isLastQuestion()) {
       this.advanceTimeoutId = setTimeout(() => this.next(), AUTO_ADVANCE_DELAY_MS);
     }
+  }
+
+  setAutoAdvance(value: boolean): void {
+    this.prefs.setAutoAdvance(value);
+    if (!value) {
+      this.cancelAutoAdvance();
+    }
+  }
+
+  navClass(question: Question, index: number): string {
+    const answer = this.answers()[question.id];
+    const current = index === this.currentIndex();
+    const ring = current ? ' ring-2 ring-sky-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900' : '';
+    if (answer === undefined) {
+      return current
+        ? 'bg-brand-600 text-white'
+        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400';
+    }
+    return (answer === question.correctOptionIndex ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white') + ring;
+  }
+
+  // F1–F9 yoki 1–9 — variantni tanlash, Enter / → — keyingi savol, ← — oldingi, Esc — rasmni yopish.
+  @HostListener('document:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (this.sessionEnded() || event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+    const target = event.target as HTMLElement | null;
+    if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) {
+      return;
+    }
+    if (event.key === 'Escape' && this.imageOpen()) {
+      this.closeImage();
+      return;
+    }
+
+    const match = /^(?:F([1-9])|([1-9]))$/.exec(event.key);
+    if (match) {
+      const index = Number(match[1] ?? match[2]) - 1;
+      const q = this.currentQuestion();
+      if (q && index < q.options.length) {
+        event.preventDefault(); // F1 brauzer yordamini ochmasin
+        this.selectOption(index);
+      }
+      return;
+    }
+    if ((event.key === 'Enter' || event.key === 'ArrowRight') && this.isAnswered()) {
+      event.preventDefault();
+      this.next();
+    } else if (event.key === 'ArrowLeft' && this.currentIndex() > 0) {
+      event.preventDefault();
+      this.goTo(this.currentIndex() - 1);
+    }
+  }
+
+  imageOf(question: Question): string {
+    return question.imageUrl || DEFAULT_QUESTION_IMAGE;
   }
 
   optionState(optionIndex: number): OptionState {

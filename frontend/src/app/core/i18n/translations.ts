@@ -262,6 +262,8 @@ const uz = {
     backHome: 'Bosh sahifaga qaytish',
     errorRequired: 'Telefon raqam va parolni kiriting.',
     errorInvalid: "Telefon raqam yoki parol noto'g'ri.",
+    sessionIdle: 'Uzoq vaqt faolsizlik sababli tizimdan chiqdingiz. Qayta kiring.',
+    sessionExpired: 'Sessiya muddati tugadi. Qayta kiring.',
   },
   testRunner: {
     idleTitle: 'Imtihon simulyatsiyasi',
@@ -284,6 +286,11 @@ const uz = {
     errorEmptyBank: "Savollar bazasi hali bo'sh. Avval backend'da savollarni import qiling.",
     errorLoadFailed: "Savollarni yuklab bo'lmadi. Backend ishga tushirilganini tekshiring.",
     practiceDone: "Siz ushbu ro'yxatdagi barcha savollarni ko'rib chiqdingiz.",
+    prevBtn: 'Oldingi',
+    autoAdvance: "Avtomatik o'tish",
+    autoAdvanceHint: "To'g'ri javob belgilanganda keyingi savolga avtomatik o'tish",
+    yes: 'Ha',
+    no: "Yo'q",
   },
   pages: {
     tickets: {
@@ -581,6 +588,8 @@ const uzk: TranslationTree = {
     backHome: 'Бош саҳифага қайтиш',
     errorRequired: 'Телефон рақам ва паролни киритинг.',
     errorInvalid: 'Телефон рақам ёки парол нотўғри.',
+    sessionIdle: 'Узоқ вақт фаолсизлик сабабли тизимдан чиқдингиз. Қайта киринг.',
+    sessionExpired: 'Сессия муддати тугади. Қайта киринг.',
   },
   testRunner: {
     idleTitle: 'Имтиҳон симуляцияси',
@@ -603,6 +612,11 @@ const uzk: TranslationTree = {
     errorEmptyBank: "Саволлар базаси ҳали бўш. Аввал backend'да саволларни import қилинг.",
     errorLoadFailed: 'Саволларни юклаб бўлмади. Backend ишга туширилганини текширинг.',
     practiceDone: 'Сиз ушбу рўйхатдаги барча саволларни кўриб чиқдингиз.',
+    prevBtn: 'Олдинги',
+    autoAdvance: 'Автоматик ўтиш',
+    autoAdvanceHint: 'Тўғри жавоб белгиланганда кейинги саволга автоматик ўтиш',
+    yes: 'Ҳа',
+    no: 'Йўқ',
   },
   pages: {
     tickets: {
@@ -894,6 +908,8 @@ const ru: TranslationTree = {
     backHome: 'Вернуться на главную',
     errorRequired: 'Введите номер телефона и пароль.',
     errorInvalid: 'Неверный номер телефона или пароль.',
+    sessionIdle: 'Вы вышли из системы из-за длительного бездействия. Войдите снова.',
+    sessionExpired: 'Сессия истекла. Войдите снова.',
   },
   testRunner: {
     idleTitle: 'Симуляция экзамена',
@@ -915,6 +931,11 @@ const ru: TranslationTree = {
     errorEmptyBank: 'База вопросов пока пуста. Сначала импортируйте вопросы в backend.',
     errorLoadFailed: 'Не удалось загрузить вопросы. Проверьте, запущен ли backend.',
     practiceDone: 'Вы просмотрели все вопросы из этого списка.',
+    prevBtn: 'Назад',
+    autoAdvance: 'Автопереход',
+    autoAdvanceHint: 'Автоматически переходить к следующему вопросу после правильного ответа',
+    yes: 'Да',
+    no: 'Нет',
   },
   pages: {
     tickets: {

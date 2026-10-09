@@ -12,12 +12,19 @@ export class TopicsService {
     private readonly topicsRepository: Repository<Topic>,
   ) {}
 
-  create(dto: CreateTopicDto): Promise<Topic> {
-    return this.topicsRepository.save(this.topicsRepository.create(dto));
+  async create(dto: CreateTopicDto): Promise<Topic> {
+    const raw = await this.topicsRepository
+      .createQueryBuilder('topic')
+      .select('MAX(topic.sortOrder)', 'maxSortOrder')
+      .getRawOne<{ maxSortOrder: number | null }>();
+
+    return this.topicsRepository.save(
+      this.topicsRepository.create({ ...dto, sortOrder: (raw?.maxSortOrder ?? 0) + 1 }),
+    );
   }
 
   findAll(): Promise<Topic[]> {
-    return this.topicsRepository.find();
+    return this.topicsRepository.find({ order: { sortOrder: 'ASC', name: 'ASC' } });
   }
 
   async findOne(id: string): Promise<Topic> {

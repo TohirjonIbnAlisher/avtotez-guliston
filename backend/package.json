@@ -20,7 +20,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
     "seed:meta": "ts-node -r tsconfig-paths/register src/database/assign-metadata.ts",
-    "seed:admin": "ts-node -r tsconfig-paths/register src/database/create-admin.ts"
+    "seed:admin": "ts-node -r tsconfig-paths/register src/database/create-admin.ts",
+    "seed:topics": "ts-node -r tsconfig-paths/register src/database/reset-topics.ts",
+    "seed:assign-topics": "ts-node -r tsconfig-paths/register src/database/assign-topics.ts",
+    "seed:custom-questions": "ts-node -r tsconfig-paths/register src/database/seed-custom-questions.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

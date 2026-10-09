@@ -44,6 +44,10 @@ export class Question {
   @Column({ name: 'is_number_related', default: false })
   isNumberRelated: boolean;
 
+  // Mavzu ichidagi tartib raqami (1 dan boshlab, bo'shliqsiz). Mavzusiz savollarda null.
+  @Column({ name: 'topic_order', type: 'int', nullable: true })
+  topicOrder: number | null;
+
   @ManyToOne(() => Topic, (topic) => topic.questions, {
     onDelete: 'SET NULL',
     nullable: true,

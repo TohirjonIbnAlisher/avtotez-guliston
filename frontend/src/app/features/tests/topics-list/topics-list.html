@@ -12,17 +12,28 @@
   @if (loading() || store.loading()) {
     <p class="animate-pulse mt-8 text-center text-lg text-slate-500 dark:text-slate-400">{{ translate.t('testRunner.loading') }}</p>
   } @else {
-    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      @for (tile of tiles(); track tile.topic.id) {
-        <a
-          [routerLink]="['/tests/topics', tile.topic.id]"
-          class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:shadow-none dark:hover:border-slate-700"
-        >
-          <div class="font-bold text-slate-900 dark:text-white">{{ tile.topic.name }}</div>
-          <div class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {{ translate.t('pages.topics.questionsCount', { count: tile.count }) }}
+    <div class="mt-6 flex flex-col gap-8">
+      @for (group of groups(); track group.category) {
+        <div>
+          @if (group.category) {
+            <h2 class="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              {{ group.category }}
+            </h2>
+          }
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @for (tile of group.tiles; track tile.topic.id) {
+              <a
+                [routerLink]="['/tests/topics', tile.topic.id]"
+                class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:shadow-none dark:hover:border-slate-700"
+              >
+                <div class="font-bold text-slate-900 dark:text-white">{{ tile.topic.name }}</div>
+                <div class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {{ translate.t('pages.topics.questionsCount', { count: tile.count }) }}
+                </div>
+              </a>
+            }
           </div>
-        </a>
+        </div>
       }
     </div>
   }
