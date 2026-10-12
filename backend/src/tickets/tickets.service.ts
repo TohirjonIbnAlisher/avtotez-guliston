@@ -58,6 +58,27 @@ export class TicketsService {
     return tickets.map((ticket) => resolveTicket(sortQuestionsBySourceId(ticket), lang));
   }
 
+  async summary(): Promise<{ id: string; number: number; questionCount: number }[]> {
+    const rows: { id: string; number: number; question_count: string }[] = await this.ticketsRepository
+      .createQueryBuilder('t')
+      .leftJoin('t.questions', 'q')
+      .select('t.id', 'id')
+      .addSelect('t.number', 'number')
+      .addSelect('COUNT(q.id)', 'question_count')
+      .groupBy('t.id')
+      .orderBy('t.number', 'ASC')
+      .getRawMany();
+    return rows.map((r) => ({ id: r.id, number: Number(r.number), questionCount: Number(r.question_count) }));
+  }
+
+  async findByNumber(number: number, lang: Locale = DEFAULT_LOCALE): Promise<ResolvedTicket> {
+    const ticket = await this.ticketsRepository.findOne({ where: { number }, relations: { questions: true } });
+    if (!ticket) {
+      throw new NotFoundException(`Bilet topilmadi: ${number}`);
+    }
+    return resolveTicket(sortQuestionsBySourceId(ticket), lang);
+  }
+
   async findOne(id: string, lang: Locale = DEFAULT_LOCALE): Promise<ResolvedTicket> {
     const ticket = await this.findEntityOrThrow(id);
     return resolveTicket(sortQuestionsBySourceId(ticket), lang);

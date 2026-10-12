@@ -22,9 +22,9 @@ export class TicketSession {
   private readonly ticketNumber = Number(this.route.snapshot.paramMap.get('number'));
 
   constructor() {
-    this.ticketsApi.findAll().subscribe({
-      next: (tickets) => {
-        this.ticket.set(tickets.find((t) => t.number === this.ticketNumber) ?? null);
+    this.ticketsApi.findByNumber(this.ticketNumber).subscribe({
+      next: (ticket) => {
+        this.ticket.set(ticket);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

@@ -21,6 +21,13 @@ export interface Question {
   topicOrder: number | null;
 }
 
+/** Biletlar ro'yxati uchun yengil ma'lumot (savollarsiz). */
+export interface TicketSummary {
+  id: string;
+  number: number;
+  questionCount: number;
+}
+
 export interface Ticket {
   id: string;
   number: number;

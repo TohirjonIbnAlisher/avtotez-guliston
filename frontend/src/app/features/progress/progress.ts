@@ -7,7 +7,7 @@ import { StreakService } from '../../core/services/streak.service';
 import { TopicsApiService } from '../../core/services/topics-api.service';
 import { TicketsApiService } from '../../core/services/tickets-api.service';
 import { TestHistoryService, TestSessionRecord } from '../../core/services/test-history.service';
-import { Topic, Ticket } from '../../core/models/question.model';
+import { Topic, TicketSummary as TicketListItem } from '../../core/models/question.model';
 import { TranslateService } from '../../core/services/translate.service';
 import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -95,14 +95,14 @@ export class ProgressPage {
   private readonly prefs = inject(TestPreferencesService);
 
   private readonly topics = signal<Topic[]>([]);
-  private readonly tickets = signal<Ticket[]>([]);
+  private readonly tickets = signal<TicketListItem[]>([]);
 
   readonly range = signal<RangeKey>('30d');
   readonly hoveredDayIndex = signal<number | null>(null);
 
   constructor() {
     this.topicsApi.findAll().subscribe({ next: (topics) => this.topics.set(topics) });
-    this.ticketsApi.findAll().subscribe({ next: (tickets) => this.tickets.set(tickets) });
+    this.ticketsApi.summary().subscribe({ next: (tickets) => this.tickets.set(tickets) });
   }
 
   setRange(range: RangeKey): void {

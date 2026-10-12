@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { TicketsApiService } from '../../../core/services/tickets-api.service';
 import { ProgressService } from '../../../core/services/progress.service';
 import { TranslateService } from '../../../core/services/translate.service';
-import { Ticket } from '../../../core/models/question.model';
+import { TicketSummary } from '../../../core/models/question.model';
 
 type TicketFilter = 'all' | 'new' | 'mistakes';
 type TicketColor = 'none' | 'green' | 'yellow' | 'red';
@@ -28,11 +28,11 @@ export class TicketsList {
   protected readonly translate = inject(TranslateService);
 
   readonly loading = signal(true);
-  private readonly tickets = signal<Ticket[]>([]);
+  private readonly tickets = signal<TicketSummary[]>([]);
   readonly filter = signal<TicketFilter>('all');
 
   constructor() {
-    this.ticketsApi.findAll().subscribe({
+    this.ticketsApi.summary().subscribe({
       next: (tickets) => {
         this.tickets.set(tickets);
         this.loading.set(false);
@@ -55,8 +55,8 @@ export class TicketsList {
             : 'red';
       return {
         number: ticket.number,
-        total: ticket.questions.length,
-        correct: stat?.correct ?? ticket.questions.length,
+        total: ticket.questionCount,
+        correct: stat?.correct ?? ticket.questionCount,
         wrong,
         attempted,
         color,
