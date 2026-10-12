@@ -16,6 +16,7 @@ import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { CreateUserProgress1760000000000 } from './migrations/1760000000000-CreateUserProgress';
 import { AddQuestionTopicOrder1760100000000 } from './migrations/1760100000000-AddQuestionTopicOrder';
 import { CreateRefreshTokens1760200000000 } from './migrations/1760200000000-CreateRefreshTokens';
+import { AddTopicCategory1760600000000 } from './migrations/1760600000000-AddTopicCategory';
 import { AddTicketQuestionOrder1760300000000 } from './migrations/1760300000000-AddTicketQuestionOrder';
 import { AddQuestionVideoUrl1760400000000 } from './migrations/1760400000000-AddQuestionVideoUrl';
 import { AddUserAvatar1760500000000 } from './migrations/1760500000000-AddUserAvatar';
@@ -62,6 +63,7 @@ import { ContactMessage } from './contact-messages/entities/contact-message.enti
             AddTicketQuestionOrder1760300000000,
             AddQuestionVideoUrl1760400000000,
             AddUserAvatar1760500000000,
+            AddTopicCategory1760600000000,
           ],
           migrationsRun: true,
           ssl,

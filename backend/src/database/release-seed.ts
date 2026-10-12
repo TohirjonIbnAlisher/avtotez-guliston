@@ -63,6 +63,12 @@ function runStep(script: string, args: string[]): void {
 async function main(): Promise<void> {
   const hash = dataHash();
   const stored = await withDataSource(async (ds) => {
+    // Migratsiyasi tushib qolgan ustun/jadval bo'lsa — logda darhol ko'rinsin (sxemaga tegilmaydi).
+    const diff = await ds.driver.createSchemaBuilder().log();
+    if (diff.upQueries.length) {
+      console.warn(`[release-seed] Ogohlantirish: baza sxemasi kod bilan mos emas (${diff.upQueries.length} ta farq):`);
+      for (const q of diff.upQueries) console.warn('  ' + q.query);
+    }
     await ds.query(
       `CREATE TABLE IF NOT EXISTS "seed_state" ("key" varchar PRIMARY KEY, "value" varchar NOT NULL, "updated_at" timestamptz NOT NULL DEFAULT now())`,
     );
