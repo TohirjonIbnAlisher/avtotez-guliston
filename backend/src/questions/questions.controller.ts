@@ -29,6 +29,7 @@ import { DEFAULT_LOCALE, isLocale, Locale } from './locale';
 import { SuperAdminGuard } from '../auth/superadmin.guard';
 
 const IMAGE_MIME_PATTERN = /^image\/(png|jpe?g|webp|gif)$/;
+const VIDEO_MIME_PATTERN = /^video\/(mp4|webm)$/;
 
 @Controller('questions')
 export class QuestionsController {
@@ -65,6 +66,34 @@ export class QuestionsController {
       throw new BadRequestException('Fayl yuborilmadi.');
     }
     return { imageUrl: `/media/questions/${file.filename}` };
+  }
+
+  // Javob belgilangandan keyin ko'rsatiladigan izoh-video (mp4/webm).
+  @Post('upload-video')
+  @UseGuards(SuperAdminGuard)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: join(__dirname, '..', '..', 'public', 'questions', 'videos'),
+        filename: (_req, file, callback) => {
+          callback(null, `${randomUUID()}${extname(file.originalname).toLowerCase()}`);
+        },
+      }),
+      limits: { fileSize: 30 * 1024 * 1024 },
+      fileFilter: (_req, file, callback) => {
+        if (!VIDEO_MIME_PATTERN.test(file.mimetype)) {
+          callback(new BadRequestException('Faqat mp4 yoki webm video ruxsat etiladi.'), false);
+          return;
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  uploadVideo(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Fayl yuborilmadi.');
+    }
+    return { videoUrl: `/media/questions/videos/${file.filename}` };
   }
 
   // Mavzu ichidagi savollar tartibini saqlash (admin panelidagi ▲▼).

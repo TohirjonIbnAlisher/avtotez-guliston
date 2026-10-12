@@ -29,6 +29,10 @@ export class CreateQuestionDto {
   imageUrl?: string;
 
   @IsOptional()
+  @IsString()
+  videoUrl?: string;
+
+  @IsOptional()
   @IsObject()
   explanation?: LocalizedExplanation;
 

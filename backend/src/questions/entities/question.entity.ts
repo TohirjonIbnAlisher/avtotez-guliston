@@ -33,6 +33,10 @@ export class Question {
   @Column({ name: 'image_url', type: 'varchar', nullable: true })
   imageUrl: string | null;
 
+  // Javob belgilangandan keyin ko'rsatiladigan izoh-video (masalan, harakat tartibi animatsiyasi)
+  @Column({ name: 'video_url', type: 'varchar', nullable: true })
+  videoUrl: string | null;
+
   @Column({ type: 'jsonb', nullable: true })
   explanation: LocalizedExplanation | null;
 

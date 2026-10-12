@@ -25,8 +25,11 @@ interface RawQuestion {
 }
 
 interface TopicOverrides {
-  overrides: Record<string, string>;
+  /** null — savol hech qaysi mavzuga biriktirilmaydi (ptest.uz mavzularida yo'q; random test va biletlarda qoladi). */
+  overrides: Record<string, string | null>;
 }
+
+const NO_TOPIC = '__no_topic__';
 
 const args = new Set(process.argv.slice(2));
 const DRY_RUN = args.has('--dry-run');
@@ -46,7 +49,9 @@ async function run() {
   const { overrides }: TopicOverrides = JSON.parse(
     readFileSync(join(dataDir, 'topic-overrides.json'), 'utf-8'),
   );
-  const badOverrides = [...new Set(Object.values(overrides))].filter((name) => !catalogNames.has(name));
+  const badOverrides = [...new Set(Object.values(overrides))].filter(
+    (name): name is string => name !== null && !catalogNames.has(name),
+  );
   if (badOverrides.length) {
     throw new Error(`topic-overrides.json dagi mavzular katalogda yo'q: ${badOverrides.join(', ')}`);
   }
@@ -55,9 +60,12 @@ async function run() {
   const sourceStats = new Map<ClassifySource | 'ptest', number>();
   for (const q of raw) {
     const override = overrides[String(q.id)];
-    const { topic, source } = override
-      ? { topic: override, source: 'ptest' as const }
-      : classifyQuestion(q.id, q.question, q.description);
+    const { topic, source } =
+      override === null
+        ? { topic: NO_TOPIC, source: 'ptest' as const }
+        : override
+          ? { topic: override, source: 'ptest' as const }
+          : classifyQuestion(q.id, q.question, q.description);
     bySource.set(topic, [...(bySource.get(topic) ?? []), q.id]);
     sourceStats.set(source, (sourceStats.get(source) ?? 0) + 1);
   }
@@ -101,7 +109,7 @@ async function run() {
            WHERE "source_id" = ANY($2::int[]) ${ONLY_EMPTY ? 'AND "topic_id" IS NULL' : ''}`,
           // Qo'lda tuzilgan mavzuga rasmiy savollar biriktirilmaydi — ular mavzusiz qoladi
           // (random test va biletlarda baribir ishtirok etadi).
-          [curatedNames.has(name) ? null : idByName.get(name), sourceIds],
+          [curatedNames.has(name) || name === NO_TOPIC ? null : idByName.get(name), sourceIds],
         );
         updated += result[1];
       }

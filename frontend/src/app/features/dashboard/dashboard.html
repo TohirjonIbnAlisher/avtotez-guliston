@@ -1,201 +1,249 @@
-<div class="min-h-screen bg-slate-50 dark:bg-slate-950">
-  <!-- Cabinet header -->
-  <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
-    <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3.5">
-      <a routerLink="/" class="flex items-center gap-2.5">
-        <app-logo-mark size="sm" />
-        <span class="hidden text-base font-extrabold tracking-tight text-slate-900 sm:inline dark:text-white">{{ translate.t('common.brand') }}</span>
-      </a>
-
-      <nav class="flex items-center gap-1 overflow-x-auto">
-        @for (pill of navPills; track pill.labelKey) {
-          <a
-            [routerLink]="pill.route"
-            class="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap transition"
-            [class.bg-brand-500/15]="pill.active"
-            [class.text-brand-400]="pill.active"
-            [class.text-slate-600]="!pill.active"
-            [class.dark:text-slate-300]="!pill.active"
-            [class.hover:bg-slate-100]="!pill.active"
-            [class.dark:hover:bg-slate-800]="!pill.active"
-          >
-            {{ translate.t(pill.labelKey) }}
-          </a>
-        }
-      </nav>
-
-      <div class="flex items-center gap-3">
-        <div class="hidden items-center gap-0.5 rounded-lg bg-slate-100 p-1 dark:bg-slate-800 md:flex">
-          @for (option of localeOptions; track option.code) {
-            <button
-              type="button"
-              (click)="languageService.setLocale(option.code)"
-              class="rounded-md px-2.5 py-1.5 text-sm font-semibold transition"
-              [class.bg-brand-600]="languageService.locale() === option.code"
-              [class.text-white]="languageService.locale() === option.code"
-              [class.text-slate-500]="languageService.locale() !== option.code"
-              [class.dark:text-slate-400]="languageService.locale() !== option.code"
-            >
-              {{ option.label }}
-            </button>
+<div class="min-h-screen bg-slate-100 dark:bg-asphalt-950">
+  <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+    <!-- Mashina paneli: spidometr + ko'rsatkichlar -->
+    <section class="grid gap-5 rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 md:grid-cols-[1.05fr_1fr] dark:border-asphalt-700 dark:bg-asphalt-850">
+      <div class="flex flex-col items-center">
+        <svg viewBox="0 0 260 160" class="w-full max-w-sm" role="img" [attr.aria-label]="translate.t('dashboard.gauge.label') + ': ' + progressPercent() + '%'">
+          <path d="M30 140 A100 100 0 0 1 230 140" fill="none" class="stroke-slate-200 dark:stroke-asphalt-700" stroke-width="16" stroke-linecap="round" />
+          <path
+            d="M30 140 A100 100 0 0 1 230 140"
+            fill="none"
+            class="stroke-road-400 transition-[stroke-dashoffset] duration-[1400ms] ease-out"
+            stroke-width="16"
+            stroke-linecap="round"
+            [attr.stroke-dasharray]="gaugeLength"
+            [attr.stroke-dashoffset]="gaugeOffset()"
+          />
+          @for (tick of gaugeTicks; track $index) {
+            <line [attr.x1]="tick.x1" [attr.y1]="tick.y1" [attr.x2]="tick.x2" [attr.y2]="tick.y2" class="stroke-slate-300 dark:stroke-asphalt-600" stroke-width="2" />
           }
-        </div>
-
-        <button
-          type="button"
-          (click)="theme.toggle()"
-          [attr.aria-label]="translate.t('dashboard.theme.toggleAria')"
-          class="flex h-9 w-9 items-center justify-center rounded-lg text-lg text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-        >
-          {{ theme.mode() === 'dark' ? '☀️' : '🌙' }}
-        </button>
-
-        @if (userRole() === 'superadmin' || userRole() === 'admin') {
-          <a
-            routerLink="/admin"
-            class="hidden items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 sm:flex"
-          >
-            ⚙️ Boshqaruv paneli
-          </a>
-        }
-
-        <div class="hidden items-center gap-2 sm:flex">
-          <span class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
-            {{ userInitial() }}
-          </span>
-          <div class="flex flex-col leading-tight">
-            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ userName() }}</span>
-            @if (userRole() !== 'user') {
-              <span class="text-xs font-semibold text-brand-500">{{ roleLabel() }}</span>
-            }
-          </div>
-        </div>
-        <button
-          type="button"
-          (click)="logout()"
-          class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
-        >
-          {{ translate.t('common.logout') }}
-        </button>
+          <text x="38" y="158" font-size="10" class="fill-slate-400">0</text>
+          <text x="210" y="158" font-size="10" class="fill-slate-400">100</text>
+          <g class="transition-transform duration-[1400ms] ease-out" [style.transform]="'rotate(' + needleAngle() + 'deg)'" style="transform-origin: 130px 140px">
+            <line x1="130" y1="140" x2="130" y2="58" stroke="#e24b4a" stroke-width="4" stroke-linecap="round" />
+          </g>
+          <circle cx="130" cy="140" r="9" class="fill-slate-700 dark:fill-slate-200" />
+          <text x="130" y="116" text-anchor="middle" font-size="30" font-weight="700" class="fill-slate-900 font-display dark:fill-white">{{ progressPercent() }}%</text>
+        </svg>
+        <div class="-mt-1 text-sm text-slate-500 dark:text-slate-400">{{ translate.t('dashboard.gauge.label') }}</div>
       </div>
-    </div>
-  </header>
 
-  <main class="mx-auto max-w-7xl px-6 py-8">
-    <!-- Progress overview -->
-    <section class="rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-50 to-white p-6 dark:from-brand-950 dark:to-slate-900 sm:p-8">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-base font-semibold text-slate-600 dark:text-slate-300">{{ translate.t('dashboard.progress.title') }}</h2>
-        <div class="flex items-center gap-2">
-          <span class="inline-flex items-center gap-1.5 rounded-full bg-orange-500/15 px-3 py-1 text-sm font-semibold text-orange-400">
-            🔥 {{ translate.t('dashboard.progress.streak', { days: streakDays() }) }}
-          </span>
+      <div class="flex flex-col justify-between gap-4">
+        <div class="flex justify-end">
           <button
             type="button"
             (click)="resetProgress()"
-            class="rounded-full bg-slate-900/5 px-3 py-1 text-sm font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-500 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+            class="rounded-full px-3 py-1 text-xs font-semibold text-slate-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
           >
             ↺ {{ translate.t('dashboard.progress.reset') }}
           </button>
         </div>
-      </div>
-
-      <div class="mt-4 text-4xl font-extrabold text-slate-900 dark:text-white sm:text-5xl">{{ progressPercent() }}%</div>
-
-      <div class="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-        <div class="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400" [style.width.%]="progressPercent()"></div>
-      </div>
-
-      <div class="mt-6 flex flex-wrap gap-3">
-        <div class="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-sm dark:bg-slate-900/60 dark:shadow-none">
-          <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
-          <span class="text-sm text-slate-600 dark:text-slate-300">{{ translate.t('dashboard.progress.correct') }} <span class="font-bold text-slate-900 dark:text-white">{{ correctCount() }}</span></span>
-        </div>
-        <div class="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-sm dark:bg-slate-900/60 dark:shadow-none">
-          <span class="h-2 w-2 rounded-full bg-red-400"></span>
-          <span class="text-sm text-slate-600 dark:text-slate-300">{{ translate.t('dashboard.progress.wrong') }} <span class="font-bold text-slate-900 dark:text-white">{{ wrongCount() }}</span></span>
-        </div>
-        <div class="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-sm dark:bg-slate-900/60 dark:shadow-none">
-          <span class="h-2 w-2 rounded-full bg-slate-400"></span>
-          <span class="text-sm text-slate-600 dark:text-slate-300">{{ translate.t('dashboard.progress.skipped') }} <span class="font-bold text-slate-900 dark:text-white">{{ skippedCount() }}</span></span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Quick actions -->
-    <section class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-      @for (action of quickActions; track action.labelKey) {
-        <a
-          [routerLink]="action.route"
-          class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none dark:hover:border-slate-700 dark:hover:bg-slate-800"
-        >
-          <span class="flex h-10 w-10 items-center justify-center rounded-xl text-lg" [class]="action.iconBg">
-            {{ action.icon }}
-          </span>
-          <span class="font-semibold text-slate-900 dark:text-slate-100">{{ translate.t(action.labelKey) }}</span>
-        </a>
-      }
-    </section>
-
-    <!-- Motivational banner -->
-    <section class="mt-4 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-5 py-4">
-      <p class="font-semibold text-white">🎯 {{ translate.t('dashboard.banner.goal') }}</p>
-    </section>
-
-    <!-- Primary actions -->
-    <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-      @for (card of primaryCards(); track card.title) {
-        <a
-          [routerLink]="card.route"
-          class="group rounded-2xl bg-gradient-to-br p-6 text-white shadow-lg transition-transform duration-200 hover:-translate-y-1"
-          [class]="card.gradient"
-        >
-          <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15 text-2xl transition-transform duration-200 group-hover:scale-110">
-            {{ card.icon }}
-          </span>
-          <h3 class="mt-4 text-lg font-bold">{{ card.title }}</h3>
-          <p class="mt-1 text-sm text-white/80">{{ card.subtitle }}</p>
-        </a>
-      }
-    </section>
-
-    <!-- Menu grid -->
-    <section class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-      @for (tile of menuTiles; track tile.labelKey) {
-        @if (tile.route) {
-          <a
-            [routerLink]="tile.route"
-            class="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none dark:hover:border-slate-700 dark:hover:bg-slate-800"
-          >
-            <span class="flex h-11 w-11 items-center justify-center rounded-xl text-lg" [class]="tile.iconBg">
-              {{ tile.icon }}
-            </span>
-            <div class="mt-3 font-semibold text-slate-900 dark:text-slate-100">{{ translate.t(tile.labelKey) }}</div>
-            @if (tile.progress !== undefined) {
-              <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                <div class="h-full rounded-full bg-brand-500" [style.width.%]="tile.progress"></div>
-              </div>
-            }
-          </a>
-        } @else {
-          <div class="relative rounded-2xl border border-slate-200 bg-white p-5 opacity-60 dark:border-slate-800 dark:bg-slate-900">
-            @if (tile.hasBadge) {
-              <span class="absolute top-3 right-3 rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-                {{ translate.t('common.comingSoon') }}
-              </span>
-            }
-            <span class="flex h-11 w-11 items-center justify-center rounded-xl text-lg" [class]="tile.iconBg">
-              {{ tile.icon }}
-            </span>
-            <div class="mt-3 font-semibold text-slate-900 dark:text-slate-100">{{ translate.t(tile.labelKey) }}</div>
-            @if (tile.progress !== undefined) {
-              <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                <div class="h-full rounded-full bg-brand-500" [style.width.%]="tile.progress"></div>
-              </div>
-            }
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="rounded-xl bg-slate-50 px-3.5 py-2.5 dark:bg-asphalt-900">
+            <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>{{ translate.t('dashboard.gauge.correct') }}</div>
+            <div class="mt-0.5 font-display text-xl text-slate-900 dark:text-white">{{ correctCount() }}</div>
           </div>
+          <div class="rounded-xl bg-slate-50 px-3.5 py-2.5 dark:bg-asphalt-900">
+            <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400"><span class="h-2 w-2 rounded-full bg-red-500"></span>{{ translate.t('dashboard.gauge.wrong') }}</div>
+            <div class="mt-0.5 font-display text-xl text-slate-900 dark:text-white">{{ wrongCount() }}</div>
+          </div>
+          <div class="rounded-xl bg-slate-50 px-3.5 py-2.5 dark:bg-asphalt-900">
+            <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400"><span class="h-2 w-2 rounded-full bg-road-400"></span>{{ translate.t('dashboard.gauge.left') }}</div>
+            <div class="mt-0.5 font-display text-xl text-slate-900 dark:text-white">{{ skippedCount() }}</div>
+          </div>
+          <div class="rounded-xl bg-slate-50 px-3.5 py-2.5 dark:bg-asphalt-900">
+            <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">🔥 {{ translate.t('dashboard.gauge.streak') }}</div>
+            <div class="mt-0.5 font-display text-xl text-slate-900 dark:text-white">{{ translate.t('dashboard.gauge.days', { days: streakDays() }) }}</div>
+          </div>
+        </div>
+        <a
+          [routerLink]="continueTarget().route"
+          class="flex h-12 items-center justify-center gap-2 rounded-xl bg-road-400 font-display text-sm text-slate-900 transition hover:-translate-y-0.5 hover:bg-road-300"
+        >
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
+          {{ translate.t('dashboard.continue.label') }} · {{ continueTarget().label }}
+        </a>
+      </div>
+    </section>
+
+    <!-- Imtihongacha yo'l -->
+    <section class="mt-6">
+      <div class="mb-1 flex items-baseline justify-between">
+        <h2 class="font-display text-sm text-slate-800 dark:text-slate-200">{{ translate.t('dashboard.road.title') }}</h2>
+        <span class="text-xs text-slate-500 dark:text-slate-400">{{ translate.t('dashboard.road.stages', { done: stagesDone(), total: stages().length }) }}</span>
+      </div>
+      <div class="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+      <svg viewBox="0 -6 1000 118" class="w-full min-w-[640px]" role="img" [attr.aria-label]="translate.t('dashboard.road.title')">
+        <path [attr.d]="roadPath" fill="none" class="stroke-asphalt-600 dark:stroke-asphalt-700" stroke-width="34" stroke-linecap="round" />
+        <path [attr.d]="roadPath" fill="none" class="stroke-road-400" stroke-width="2.5" stroke-dasharray="14 12" />
+        <path
+          [attr.d]="roadPath"
+          fill="none"
+          class="stroke-emerald-500 transition-[stroke-dasharray] duration-[1600ms] ease-out"
+          stroke-width="4"
+          stroke-opacity="0.85"
+          [attr.stroke-dasharray]="car().length + ' ' + roadTotal * 2"
+        />
+        @for (stage of stages(); track stage.labelKey) {
+          <g>
+            @switch (stage.kind) {
+              @case ('blue') {
+                <g [attr.transform]="'translate(' + stage.x + ',' + (stage.x < 450 ? 14 : 12) + ')'">
+                  <circle r="15" [attr.fill]="stage.done ? '#16a34a' : '#2563eb'" stroke="#fff" stroke-width="2.5" />
+                  <text y="4.5" text-anchor="middle" font-size="12" fill="#fff">{{ stage.done ? '✓' : $index + 1 }}</text>
+                </g>
+              }
+              @case ('ticket') {
+                <g [attr.transform]="'translate(' + stage.x + ',12)'">
+                  <rect x="-17" y="-14" width="34" height="28" rx="4" [attr.fill]="stage.done ? '#16a34a' : '#2563eb'" stroke="#fff" stroke-width="2.5" />
+                  <rect x="-12" y="-9" width="24" height="18" rx="2" fill="none" stroke="#fff" stroke-width="1" stroke-opacity="0.6" />
+                  <text y="4.5" text-anchor="middle" font-size="12" fill="#fff">{{ stage.done ? '✓' : $index + 1 }}</text>
+                </g>
+              }
+              @case ('warning') {
+                <g [attr.transform]="'translate(' + stage.x + ',20)'">
+                  <polygon points="0,-17 17,12 -17,12" fill="#fff" stroke="#e24b4a" stroke-width="4" stroke-linejoin="round" />
+                  <text y="8" text-anchor="middle" font-size="12" fill="#a32d2d">!</text>
+                </g>
+              }
+              @case ('finish') {
+                <g [attr.transform]="'translate(' + stage.x + ',12)'">
+                  <rect x="-15" y="-15" width="30" height="30" rx="4" fill="#3c3d42" stroke="#fff" stroke-width="2" />
+                  <rect x="-11" y="-11" width="7" height="7" fill="#fff" />
+                  <rect x="-4" y="-4" width="7" height="7" fill="#fff" />
+                  <rect x="3" y="3" width="7" height="7" fill="#fff" />
+                  <rect x="3" y="-11" width="7" height="7" fill="#fff" />
+                  <rect x="-11" y="3" width="7" height="7" fill="#fff" />
+                </g>
+              }
+            }
+            <text [attr.x]="stage.x" y="104" text-anchor="middle" font-size="12" class="fill-slate-600 dark:fill-slate-300">
+              {{ translate.t(stage.labelKey) }}{{ stage.value ? ' · ' + stage.value : '' }}
+            </text>
+          </g>
         }
+        <!-- Foydalanuvchining mashinasi -->
+        <g class="transition-transform duration-[1600ms] ease-out" [style.transform]="'translate(' + car().x + 'px,' + car().y + 'px) rotate(' + car().angle + 'deg)'">
+          <rect x="-17" y="-9" width="34" height="18" rx="6" fill="#e24b4a" />
+          <rect x="-5" y="-7" width="11" height="14" rx="2" fill="#f7c1c1" />
+          <rect x="-14" y="-10.5" width="6" height="3" rx="1" fill="#1a1a1a" />
+          <rect x="-14" y="7.5" width="6" height="3" rx="1" fill="#1a1a1a" />
+          <rect x="8" y="-10.5" width="6" height="3" rx="1" fill="#1a1a1a" />
+          <rect x="8" y="7.5" width="6" height="3" rx="1" fill="#1a1a1a" />
+        </g>
+      </svg>
+      </div>
+    </section>
+
+    <!-- Yo'l belgisi shaklidagi asosiy bo'limlar -->
+    <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <a routerLink="/tests/topics" class="group flex flex-col items-center gap-2.5 rounded-2xl border border-transparent p-4 transition hover:border-slate-200 hover:bg-white dark:hover:border-asphalt-700 dark:hover:bg-asphalt-850">
+        <svg viewBox="0 0 64 64" class="h-16 w-16 transition-transform duration-200 group-hover:-translate-y-1" aria-hidden="true">
+          <circle cx="32" cy="32" r="28" fill="#2563eb" stroke="#fff" stroke-width="3.5" />
+          <text x="32" y="39" text-anchor="middle" font-size="20" fill="#fff" class="font-display">{{ topicCount() }}</text>
+        </svg>
+        <span class="text-center text-sm font-semibold text-slate-800 dark:text-slate-200">{{ translate.t('dashboard.nav.topics') }}</span>
+      </a>
+      <a routerLink="/tests/tickets" class="group flex flex-col items-center gap-2.5 rounded-2xl border border-transparent p-4 transition hover:border-slate-200 hover:bg-white dark:hover:border-asphalt-700 dark:hover:bg-asphalt-850">
+        <svg viewBox="0 0 64 64" class="h-16 w-16 transition-transform duration-200 group-hover:-translate-y-1" aria-hidden="true">
+          <rect x="5" y="9" width="54" height="46" rx="6" fill="#2563eb" stroke="#fff" stroke-width="3.5" />
+          <rect x="11" y="15" width="42" height="34" rx="3" fill="none" stroke="#fff" stroke-width="1.5" stroke-opacity="0.6" />
+          <text x="32" y="39" text-anchor="middle" font-size="20" fill="#fff" class="font-display">{{ totalTickets }}</text>
+        </svg>
+        <span class="text-center text-sm font-semibold text-slate-800 dark:text-slate-200">{{ translate.t('dashboard.nav.tickets') }}</span>
+      </a>
+      <a routerLink="/tests/mistakes" class="group flex flex-col items-center gap-2.5 rounded-2xl border border-transparent p-4 transition hover:border-slate-200 hover:bg-white dark:hover:border-asphalt-700 dark:hover:bg-asphalt-850">
+        <svg viewBox="0 0 68 64" class="h-16 w-[68px] transition-transform duration-200 group-hover:-translate-y-1" aria-hidden="true">
+          <polygon points="34,6 63,57 5,57" fill="#fff" stroke="#e24b4a" stroke-width="7" stroke-linejoin="round" />
+          <text x="34" y="50" text-anchor="middle" font-size="16" fill="#a32d2d" class="font-display">{{ wrongCount() }}</text>
+        </svg>
+        <span class="text-center text-sm font-semibold text-slate-800 dark:text-slate-200">{{ translate.t('dashboard.signs.mistakes') }}</span>
+      </a>
+      <button type="button" (click)="goalOpen.set(true)" class="group flex flex-col items-center gap-2.5 rounded-2xl border border-transparent p-4 transition hover:border-slate-200 hover:bg-white dark:hover:border-asphalt-700 dark:hover:bg-asphalt-850">
+        <svg viewBox="0 0 64 64" class="h-16 w-16 transition-transform duration-200 group-hover:-translate-y-1" aria-hidden="true">
+          <rect x="11" y="11" width="42" height="42" fill="#f5c518" stroke="#fff" stroke-width="3.5" transform="rotate(45 32 32)" />
+          <text x="32" y="37" text-anchor="middle" [attr.font-size]="todayCount() >= dailyGoal() ? 18 : 12" fill="#412402" class="font-display">{{ todayCount() >= dailyGoal() ? '✓' : todayCount() + '/' + dailyGoal() }}</text>
+        </svg>
+        <span class="text-center text-sm font-semibold text-slate-800 dark:text-slate-200">{{ translate.t('dashboard.signs.goal') }}</span>
+      </button>
+    </section>
+
+    <!-- Qolgan bo'limlar — ixcham ro'yxat -->
+    <section class="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+      @for (item of listItems; track item.route) {
+        <a
+          [routerLink]="item.route"
+          class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 dark:border-asphalt-700 dark:bg-asphalt-850 dark:text-slate-200 dark:hover:border-asphalt-600"
+        >
+          <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0" [class]="item.iconColor" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            @switch (item.icon) {
+              @case ('list') { <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" /> }
+              @case ('shuffle') { <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /> }
+              @case ('bookmark') { <path d="M6 3h12v18l-6-4-6 4z" /> }
+              @case ('chart') { <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /> }
+            }
+          </svg>
+          {{ translate.t(item.labelKey) }}
+        </a>
       }
     </section>
   </main>
+
+  <!-- Bugungi maqsad oynasi -->
+  @if (goalOpen()) {
+    <div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4" (click)="closeGoal()">
+      <div
+        class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-asphalt-700 dark:bg-asphalt-850"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="translate.t('dashboard.signs.goal')"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="flex items-center justify-between">
+          <h2 class="font-display text-base text-slate-900 dark:text-white">{{ translate.t('dashboard.signs.goal') }}</h2>
+          <button type="button" (click)="closeGoal()" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-asphalt-800 dark:hover:text-white" aria-label="×">✕</button>
+        </div>
+
+        <div class="mt-4 flex items-center gap-5">
+          <svg viewBox="0 0 120 120" class="h-32 w-32 shrink-0 -rotate-90">
+            <circle cx="60" cy="60" r="52" fill="none" class="stroke-slate-200 dark:stroke-asphalt-700" stroke-width="12" />
+            <circle
+              cx="60" cy="60" r="52" fill="none"
+              [class]="goalPercent() >= 100 ? 'stroke-emerald-500' : 'stroke-road-400'"
+              stroke-width="12" stroke-linecap="round"
+              [attr.stroke-dasharray]="ringLength"
+              [attr.stroke-dashoffset]="ringLength * (1 - goalPercent() / 100)"
+            />
+            <text x="60" y="60" text-anchor="middle" dominant-baseline="central" font-size="22" transform="rotate(90 60 60)" class="fill-slate-900 font-display dark:fill-white">{{ todayCount() }}/{{ dailyGoal() }}</text>
+          </svg>
+          <div class="flex flex-col gap-2">
+            <p class="text-sm font-semibold" [class]="goalLeft() === 0 ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-200'">
+              {{ goalLeft() === 0 ? translate.t('dashboard.goal.done') : translate.t('dashboard.goal.left', { count: goalLeft() }) }}
+            </p>
+            <div class="flex gap-2">
+              <span class="rounded-lg bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">✓ {{ todayCorrect() }}</span>
+              <span class="rounded-lg bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-600 dark:text-red-400">✕ {{ todayWrong() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-400">{{ translate.t('dashboard.goal.week') }}</h3>
+        <div class="mt-2 flex h-28 items-end gap-2">
+          @for (day of weekBars(); track day.label) {
+            <div class="flex flex-1 flex-col items-center gap-1">
+              <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{{ day.count }}</span>
+              <div class="w-full rounded-md"
+                   [class]="day.reached ? 'bg-emerald-500' : day.today ? 'bg-road-400' : 'bg-slate-300 dark:bg-asphalt-600'"
+                   [style.height.px]="Math.max(4, (day.count / weekMax()) * 72)"></div>
+              <span class="text-[10px]" [class]="day.today ? 'font-bold text-road-500 dark:text-road-400' : 'text-slate-400'">{{ day.label }}</span>
+            </div>
+          }
+        </div>
+
+        <a routerLink="/tests/random" (click)="closeGoal()" class="mt-6 flex h-11 items-center justify-center rounded-xl bg-road-400 font-display text-sm text-slate-900 transition hover:bg-road-300">
+          {{ translate.t('dashboard.goal.practice') }}
+        </a>
+      </div>
+    </div>
+  }
 </div>

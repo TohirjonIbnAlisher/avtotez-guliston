@@ -55,6 +55,11 @@ export class AuthService {
   private readonly userSignal = signal<AuthUser | null>(readStoredUser());
   readonly currentUser = this.userSignal.asReadonly();
   readonly isAuthenticated = computed(() => this.userSignal() !== null);
+  /** Profil rasmining to'liq manzili (yo'q bo'lsa null). */
+  readonly avatarSrc = computed(() => {
+    const url = this.userSignal()?.avatarUrl;
+    return url ? (/^https?:\/\//.test(url) ? url : `${environment.apiUrl}${url}`) : null;
+  });
 
   private refreshInFlight: Promise<string> | null = null;
 
@@ -160,6 +165,33 @@ export class AuthService {
     }
   }
 
+  // ---------- Profil ----------
+
+  updateProfile(fullName: string): Observable<AuthUser> {
+    return this.http.patch<AuthUser>(`${this.baseUrl}/me`, { fullName }).pipe(tap((user) => this.setUser(user)));
+  }
+
+  uploadAvatar(file: File): Observable<AuthUser> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<AuthUser>(`${this.baseUrl}/me/avatar`, form).pipe(tap((user) => this.setUser(user)));
+  }
+
+  removeAvatar(): Observable<AuthUser> {
+    return this.http.delete<AuthUser>(`${this.baseUrl}/me/avatar`).pipe(tap((user) => this.setUser(user)));
+  }
+
+  /** Parol almashtiriladi; shu qurilmadagi sessiya saqlanadi, boshqa qurilmalardan chiqariladi. */
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    const refreshToken = storage()?.getItem(REFRESH_KEY) ?? undefined;
+    return this.http.put<void>(`${this.baseUrl}/me/password`, { currentPassword, newPassword, refreshToken });
+  }
+
+  private setUser(user: AuthUser): void {
+    storage()?.setItem(USER_KEY, JSON.stringify(user));
+    this.userSignal.set(user);
+  }
+
   private async withLock<T>(fn: () => Promise<T>): Promise<T> {
     const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
     return locks ? locks.request('avtotez-guliston-auth-refresh', fn) : fn();
@@ -178,7 +210,13 @@ export class AuthService {
       }
     }
     const prev = this.userSignal();
-    if (!prev || prev.id !== res.user.id || prev.role !== res.user.role || prev.fullName !== res.user.fullName) {
+    if (
+      !prev ||
+      prev.id !== res.user.id ||
+      prev.role !== res.user.role ||
+      prev.fullName !== res.user.fullName ||
+      prev.avatarUrl !== res.user.avatarUrl
+    ) {
       this.userSignal.set(res.user);
     }
   }

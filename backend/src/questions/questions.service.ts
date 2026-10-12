@@ -40,6 +40,7 @@ export class QuestionsService {
           options: dto.options,
           correctOptionIndex: dto.correctOptionIndex,
           imageUrl: dto.imageUrl ?? null,
+          videoUrl: dto.videoUrl ?? null,
           explanation: dto.explanation ?? null,
           isTricky: dto.isTricky ?? false,
           isNumberRelated: dto.isNumberRelated ?? false,

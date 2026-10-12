@@ -1,4 +1,5 @@
-import { Component, DestroyRef, HostListener, computed, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, HostListener, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Location } from '@angular/common';
 import { Question } from '../../../core/models/question.model';
 import { ProgressService } from '../../../core/services/progress.service';
 import { TestHistoryService } from '../../../core/services/test-history.service';
@@ -32,12 +33,21 @@ export class TestSession {
   protected readonly translate = inject(TranslateService);
   protected readonly prefs = inject(TestPreferencesService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly location = inject(Location);
 
   readonly questions = input.required<Question[]>();
   readonly title = input('');
   readonly scored = input(false);
   readonly countdown = input(false);
   readonly allowSave = input(true);
+  /** Sarlavhada "Yakunlash" tugmasi va yakunda natijalar oynasi (mavzu va bilet testlari). */
+  readonly finishButton = input(false);
+  /**
+   * Avval berilgan javoblarni (progress) tiklab, birinchi javobsiz savoldan davom ettirish (mavzu testlari).
+   * Foydalanuvchi shu sessiyada javob bergach yoki "Qayta" bosgach, qayta tiklanmaydi.
+   */
+  readonly resume = input(false);
+  private resumeDone = false;
 
   readonly completed = output<SessionResult>();
 
@@ -46,6 +56,7 @@ export class TestSession {
   readonly elapsedSeconds = signal(0);
   readonly sessionEnded = signal(false);
   readonly imageOpen = signal(false);
+  readonly resultsOpen = signal(false);
 
   private advanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private readonly intervalId: ReturnType<typeof setInterval>;
@@ -101,7 +112,40 @@ export class TestSession {
   readonly passThreshold = computed(() => Math.ceil(this.questions().length * PASS_RATIO));
   readonly passed = computed(() => this.correctCount() >= this.passThreshold());
 
+  /** Haqiqiy noto'g'ri javoblar (javobsizlar kirmaydi) — natijalar oynasi uchun. */
+  readonly answeredWrongCount = computed(() => this.answeredCount() - this.correctCount());
+  readonly unansweredCount = computed(() => this.questions().length - this.answeredCount());
+
+  questionResult(question: Question): 'correct' | 'wrong' | 'none' {
+    const answer = this.answers()[question.id];
+    if (answer === undefined) {
+      return 'none';
+    }
+    return answer === question.correctOptionIndex ? 'correct' : 'wrong';
+  }
+
   constructor() {
+    // Progress server'dan keyinroq kelishi mumkin — kelganda ham tiklanadi (foydalanuvchi hali javob bermagan bo'lsa).
+    effect(() => {
+      if (!this.resume() || this.resumeDone) {
+        return;
+      }
+      const questions = this.questions();
+      const correct = this.progress.correctIds();
+      const mistakes = this.progress.mistakes();
+      const restored: Record<string, number> = {};
+      for (const q of questions) {
+        if (correct.has(q.id)) {
+          restored[q.id] = q.correctOptionIndex;
+        } else if (q.id in mistakes) {
+          restored[q.id] = mistakes[q.id];
+        }
+      }
+      this.answers.set(restored);
+      const firstOpen = questions.findIndex((q) => restored[q.id] === undefined);
+      this.currentIndex.set(firstOpen === -1 ? Math.max(0, questions.length - 1) : firstOpen);
+    });
+
     this.intervalId = setInterval(() => {
       if (this.sessionEnded()) {
         return;
@@ -142,11 +186,13 @@ export class TestSession {
     }
 
     const isCorrect = optionIndex === q.correctOptionIndex;
+    this.resumeDone = true;
     this.answers.update((a) => ({ ...a, [q.id]: optionIndex }));
     this.progress.recordAnswer(q.id, isCorrect, optionIndex);
 
     // Xato javobda o'tmaydi — foydalanuvchi to'g'ri javob va izohni ko'rib, o'zi davom ettiradi.
-    if (isCorrect && this.prefs.autoAdvance() && !this.isLastQuestion()) {
+    // Izoh-videosi bor savolda ham o'tmaydi — video oxirigacha ko'rilsin.
+    if (isCorrect && !q.videoUrl && this.prefs.autoAdvance() && !this.isLastQuestion()) {
       this.advanceTimeoutId = setTimeout(() => this.next(), AUTO_ADVANCE_DELAY_MS);
     }
   }
@@ -208,6 +254,11 @@ export class TestSession {
     return question.imageUrl || DEFAULT_QUESTION_IMAGE;
   }
 
+  replayVideo(video: HTMLVideoElement): void {
+    video.currentTime = 0;
+    void video.play();
+  }
+
   optionState(optionIndex: number): OptionState {
     const q = this.currentQuestion();
     const selected = this.selectedOption();
@@ -247,8 +298,27 @@ export class TestSession {
     this.currentIndex.update((i) => i + 1);
   }
 
-  restart(): void {
+  /** "Yakunlash" tugmasi — test istalgan paytda yakunlanadi va natija hisoblanadi. */
+  finishNow(): void {
     this.cancelAutoAdvance();
+    this.finish();
+  }
+
+  /** Natijalar oynasidagi savol raqami — oynani yopib, o'sha savolni ko'rsatadi (javoblar qulflangan). */
+  reviewQuestion(index: number): void {
+    this.resultsOpen.set(false);
+    this.goTo(index);
+  }
+
+  exit(): void {
+    this.resultsOpen.set(false);
+    this.location.back();
+  }
+
+  restart(): void {
+    this.resumeDone = true;
+    this.cancelAutoAdvance();
+    this.resultsOpen.set(false);
     this.currentIndex.set(0);
     this.answers.set({});
     this.elapsedSeconds.set(0);
@@ -268,6 +338,9 @@ export class TestSession {
       return;
     }
     this.sessionEnded.set(true);
+    if (this.finishButton()) {
+      this.resultsOpen.set(true);
+    }
     const wrong = this.answeredCount() - this.correctCount();
     if (this.scored()) {
       this.testHistory.recordSession(this.title(), this.correctCount(), wrong, this.questions().length);

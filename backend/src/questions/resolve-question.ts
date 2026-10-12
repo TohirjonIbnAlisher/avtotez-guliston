@@ -8,6 +8,7 @@ export interface ResolvedQuestion {
   options: string[];
   correctOptionIndex: number;
   imageUrl: string | null;
+  videoUrl: string | null;
   explanation: string | null;
   isTricky: boolean;
   isNumberRelated: boolean;
@@ -24,6 +25,7 @@ export function resolveQuestion(question: Question, lang: Locale): ResolvedQuest
     options: question.options[lang] ?? question.options[fallback],
     correctOptionIndex: question.correctOptionIndex,
     imageUrl: question.imageUrl,
+    videoUrl: question.videoUrl,
     explanation:
       question.explanation?.[lang] ?? question.explanation?.[fallback] ?? null,
     isTricky: question.isTricky,

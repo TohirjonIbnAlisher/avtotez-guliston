@@ -9,9 +9,11 @@
     <app-test-session
       [questions]="questions()"
       [title]="topicName()"
-      [scored]="false"
+      [scored]="true"
       [countdown]="false"
       [allowSave]="true"
+      [finishButton]="true"
+      [resume]="true"
     />
   } @else {
     <p class="text-center text-lg text-slate-500 dark:text-slate-400">{{ translate.t('common.empty') }}</p>

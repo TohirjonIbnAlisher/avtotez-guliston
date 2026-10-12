@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { Observable, forkJoin, map, of } from 'rxjs';
 import { QuestionsApiService } from '../../../core/services/questions-api.service';
 import { TopicsApiService } from '../../../core/services/topics-api.service';
 import { Topic } from '../../../core/models/question.model';
@@ -60,6 +60,12 @@ export class AdminQuestionForm {
     this.imageFile() ? URL.createObjectURL(this.imageFile()!) : this.existingImageUrl(),
   );
 
+  readonly existingVideoUrl = signal<string | null>(null);
+  readonly videoFile = signal<File | null>(null);
+  readonly videoPreview = computed(() =>
+    this.videoFile() ? URL.createObjectURL(this.videoFile()!) : this.existingVideoUrl(),
+  );
+
   readonly loading = signal(!!this.questionId);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -93,6 +99,7 @@ export class AdminQuestionForm {
         this.topicOrder.set(uz.topicOrder ? String(uz.topicOrder) : '');
         this.loadTopicCount(this.originalTopicId);
         this.existingImageUrl.set(uz.imageUrl);
+        this.existingVideoUrl.set(uz.videoUrl ?? null);
         this.loading.set(false);
       },
       error: () => {
@@ -169,6 +176,18 @@ export class AdminQuestionForm {
     }
   }
 
+  onVideoSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+      this.videoFile.set(file);
+    }
+  }
+
+  removeVideo(): void {
+    this.videoFile.set(null);
+    this.existingVideoUrl.set(null);
+  }
+
   removeImage(): void {
     this.imageFile.set(null);
     this.existingImageUrl.set(null);
@@ -196,20 +215,23 @@ export class AdminQuestionForm {
     this.saving.set(true);
     this.error.set(null);
 
-    if (this.imageFile()) {
-      this.questionsApi.uploadImage(this.imageFile()!).subscribe({
-        next: (res) => this.save(res.imageUrl),
-        error: () => {
-          this.saving.set(false);
-          this.error.set("Rasmni yuklab bo'lmadi.");
-        },
-      });
-    } else {
-      this.save(this.relativeImageUrl(this.existingImageUrl()));
-    }
+    // Yangi tanlangan fayllar avval yuklanadi, so'ng savol saqlanadi.
+    const image$: Observable<string | null> = this.imageFile()
+      ? this.questionsApi.uploadImage(this.imageFile()!).pipe(map((res) => res.imageUrl))
+      : of(this.relativeMediaUrl(this.existingImageUrl()));
+    const video$: Observable<string | null> = this.videoFile()
+      ? this.questionsApi.uploadVideo(this.videoFile()!).pipe(map((res) => res.videoUrl))
+      : of(this.relativeMediaUrl(this.existingVideoUrl()));
+    forkJoin({ imageUrl: image$, videoUrl: video$ }).subscribe({
+      next: ({ imageUrl, videoUrl }) => this.save(imageUrl, videoUrl),
+      error: (err) => {
+        this.saving.set(false);
+        this.error.set(err?.error?.message ?? "Rasm yoki videoni yuklab bo'lmadi.");
+      },
+    });
   }
 
-  private save(imageUrl: string | null): void {
+  private save(imageUrl: string | null, videoUrl: string | null): void {
     const payload: AdminQuestionPayload = {
       text: this.text(),
       options: {
@@ -219,6 +241,7 @@ export class AdminQuestionForm {
       },
       correctOptionIndex: this.correctIndex(),
       imageUrl,
+      videoUrl,
       topicId: this.topicId() || null,
       topicOrder: this.topicId() ? (this.parsedTopicOrder() as number | null) : null,
     };
@@ -236,7 +259,7 @@ export class AdminQuestionForm {
     });
   }
 
-  private relativeImageUrl(url: string | null): string | null {
+  private relativeMediaUrl(url: string | null): string | null {
     if (!url) {
       return null;
     }

@@ -2,6 +2,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet, RouterLink } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { ProfileMenu } from './shared/profile-menu/profile-menu';
+import { AppHeader } from './shared/app-header/app-header';
 import { LogoMark } from './shared/logo-mark/logo-mark';
 import { LanguageService, LOCALE_OPTIONS } from './core/services/language.service';
 import { TranslateService } from './core/services/translate.service';
@@ -17,7 +19,7 @@ interface NavLink {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, LogoMark],
+  imports: [RouterOutlet, RouterLink, LogoMark, ProfileMenu, AppHeader],
   templateUrl: './app.html',
 })
 export class App {
@@ -41,8 +43,9 @@ export class App {
     { initialValue: this.router.url },
   );
 
-  protected readonly isDashboardRoute = computed(() =>
-    this.currentUrl().startsWith('/dashboard'),
+  /** Ilova ichidagi sahifalarda (kabinet, testlar, progress, profil, admin) yagona sarlavha; landing va login'da — sayt sarlavhasi. */
+  protected readonly useAppHeader = computed(() =>
+    ['/dashboard', '/tests', '/progress', '/profile', '/admin'].some((prefix) => this.currentUrl().startsWith(prefix)),
   );
 
   protected readonly isAppRoute = computed(

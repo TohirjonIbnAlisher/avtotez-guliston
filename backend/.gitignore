@@ -1,0 +1,4 @@
+
+# Foydalanuvchilar yuklagan profil rasmlari
+/public/avatars/*
+!/public/avatars/.gitkeep

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Ticket } from '../models/question.model';
+import { withAbsoluteMedia } from '../utils/media-url';
 import { LanguageService } from './language.service';
 
 @Injectable({ providedIn: 'root' })
@@ -18,13 +19,6 @@ export class TicketsApiService {
   }
 
   private withAbsoluteImageUrls(ticket: Ticket): Ticket {
-    return {
-      ...ticket,
-      questions: ticket.questions.map((q) =>
-        q.imageUrl && !/^https?:\/\//.test(q.imageUrl)
-          ? { ...q, imageUrl: `${environment.apiUrl}${q.imageUrl}` }
-          : q,
-      ),
-    };
+    return { ...ticket, questions: ticket.questions.map(withAbsoluteMedia) };
   }
 }

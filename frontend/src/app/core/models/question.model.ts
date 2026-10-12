@@ -11,6 +11,8 @@ export interface Question {
   options: string[];
   correctOptionIndex: number;
   imageUrl: string | null;
+  /** Javob belgilangandan keyin rasm o'rnida ko'rsatiladigan izoh-video. */
+  videoUrl?: string | null;
   explanation: string | null;
   isTricky: boolean;
   isNumberRelated: boolean;

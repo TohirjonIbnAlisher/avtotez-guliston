@@ -23,6 +23,22 @@
   --color-status-good: #0ca30c;
   --color-status-critical: #d03b3b;
 
+  /* "Mashina paneli va yo'l" — asfalt, yo'l chizig'i sarig'i va yo'l belgisi ranglari */
+  --color-asphalt-950: #111317;
+  --color-asphalt-900: #16181d;
+  --color-asphalt-850: #1c1f25;
+  --color-asphalt-800: #23262d;
+  --color-asphalt-700: #2c2f37;
+  --color-asphalt-600: #3a3d45;
+  --color-road-300: #fbd85a;
+  --color-road-400: #f5c518;
+  --color-road-500: #dcae0c;
+  --color-sign-blue: #2563eb;
+  --color-sign-red: #e24b4a;
+  --font-display: 'Unbounded', 'Segoe UI', system-ui, sans-serif;
+  --font-card: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+  --font-signature: 'Caveat', cursive;
+
   --animate-fade-in-up: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade-in: fade-in 0.8s ease-out both;
   --animate-float: float 6s ease-in-out infinite;

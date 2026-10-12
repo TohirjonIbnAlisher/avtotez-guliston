@@ -1,8 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, LessThan, Repository } from 'typeorm';
+import { IsNull, LessThan, Not, Repository } from 'typeorm';
+import { unlink } from 'fs/promises';
+import { join } from 'path';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { UsersService } from '../users/users.service';
@@ -16,6 +18,8 @@ export interface PublicUser {
   phone: string;
   fullName: string | null;
   role: User['role'];
+  avatarUrl: string | null;
+  createdAt: Date;
 }
 
 export interface AuthTokens {
@@ -34,7 +38,14 @@ const ROTATION_GRACE_MS = 30_000;
 const CLEANUP_AFTER_MS = 24 * 60 * 60 * 1000;
 
 function toPublicUser(user: User): PublicUser {
-  return { id: user.id, phone: user.phone, fullName: user.fullName, role: user.role };
+  return {
+    id: user.id,
+    phone: user.phone,
+    fullName: user.fullName,
+    role: user.role,
+    avatarUrl: user.avatarUrl,
+    createdAt: user.createdAt,
+  };
 }
 
 function hashToken(raw: string): string {
@@ -129,6 +140,54 @@ export class AuthService {
       throw new UnauthorizedException();
     }
     return toPublicUser(user);
+  }
+
+  // ---------- Profil ----------
+
+  async updateProfile(userId: string, fullName: string): Promise<PublicUser> {
+    const user = await this.getUserOrThrow(userId);
+    user.fullName = fullName;
+    return toPublicUser(await this.usersService.save(user));
+  }
+
+  /** Yangi rasm o'rnatiladi (null — o'chiriladi); eski fayl diskdan o'chiriladi. */
+  async setAvatar(userId: string, avatarUrl: string | null): Promise<PublicUser> {
+    const user = await this.getUserOrThrow(userId);
+    const old = user.avatarUrl;
+    user.avatarUrl = avatarUrl;
+    const saved = await this.usersService.save(user);
+    if (old?.startsWith('/media/avatars/') && old !== avatarUrl) {
+      await unlink(join(__dirname, '..', '..', 'public', old.replace('/media/', ''))).catch(() => undefined);
+    }
+    return toPublicUser(saved);
+  }
+
+  /** Parolni almashtirish: joriy sessiyadan boshqa barcha sessiyalar tugatiladi. */
+  async changePassword(userId: string, currentPassword: string, newPassword: string, keepRefreshToken?: string): Promise<void> {
+    const user = await this.getUserOrThrow(userId);
+    if (!(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      throw new BadRequestException("Joriy parol noto'g'ri.");
+    }
+    if (currentPassword === newPassword) {
+      throw new BadRequestException("Yangi parol joriy paroldan farq qilishi kerak.");
+    }
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.usersService.save(user);
+    const keepHash = keepRefreshToken ? hashToken(keepRefreshToken) : null;
+    await this.tokensRepo.update(
+      keepHash
+        ? { userId, revokedAt: IsNull(), tokenHash: Not(keepHash) }
+        : { userId, revokedAt: IsNull() },
+      { revokedAt: new Date() },
+    );
+  }
+
+  private async getUserOrThrow(userId: string): Promise<User> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    return user;
   }
 
   private buildTokens(user: User, refreshToken: string): AuthTokens {

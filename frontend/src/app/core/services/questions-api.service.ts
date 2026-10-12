@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { withAbsoluteMedia } from '../utils/media-url';
 import { Question } from '../models/question.model';
 import { AdminQuestionPayload } from '../models/admin.model';
 import { LanguageService, Locale } from './language.service';
@@ -19,7 +20,7 @@ export class QuestionsApiService {
     }
     return this.http
       .get<Question[]>(this.baseUrl, { params })
-      .pipe(map((questions) => questions.map((q) => this.withAbsoluteImageUrl(q))));
+      .pipe(map((questions) => questions.map((q) => withAbsoluteMedia(q))));
   }
 
   findRandom(count = 20): Observable<Question[]> {
@@ -27,13 +28,13 @@ export class QuestionsApiService {
       .get<Question[]>(`${this.baseUrl}/random`, {
         params: { count, lang: this.languageService.locale() },
       })
-      .pipe(map((questions) => questions.map((q) => this.withAbsoluteImageUrl(q))));
+      .pipe(map((questions) => questions.map((q) => withAbsoluteMedia(q))));
   }
 
   findOne(id: string, lang: Locale): Observable<Question> {
     return this.http
       .get<Question>(`${this.baseUrl}/${id}`, { params: { lang } })
-      .pipe(map((q) => this.withAbsoluteImageUrl(q)));
+      .pipe(map((q) => withAbsoluteMedia(q)));
   }
 
   create(payload: AdminQuestionPayload): Observable<unknown> {
@@ -53,16 +54,15 @@ export class QuestionsApiService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
+  uploadVideo(file: File): Observable<{ videoUrl: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ videoUrl: string }>(`${this.baseUrl}/upload-video`, formData);
+  }
+
   uploadImage(file: File): Observable<{ imageUrl: string }> {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<{ imageUrl: string }>(`${this.baseUrl}/upload-image`, formData);
-  }
-
-  private withAbsoluteImageUrl(question: Question): Question {
-    if (!question.imageUrl || /^https?:\/\//.test(question.imageUrl)) {
-      return question;
-    }
-    return { ...question, imageUrl: `${environment.apiUrl}${question.imageUrl}` };
   }
 }

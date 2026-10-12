@@ -1,238 +1,330 @@
-<section class="mx-auto max-w-6xl px-6 py-10">
+<section class="min-h-screen bg-slate-100 dark:bg-asphalt-950">
+<div class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
   <a routerLink="/dashboard" class="mb-4 inline-block text-sm font-semibold text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
-    ← Kabinetga qaytish
+    ← {{ translate.t('progressPage.back') }}
   </a>
 
-  <!-- Page header -->
-  <div class="flex flex-wrap items-center justify-between gap-4">
+  <!-- Sarlavha + "uzatmalar qutisi" ko'rinishidagi davr tanlagich -->
+  <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white">📊 Progress kuzatuvi</h1>
-      <p class="mt-1 text-slate-500 dark:text-slate-400">O'qish va test natijalaringizni bir joyda kuzating</p>
+      <h1 class="font-display text-2xl text-slate-900 dark:text-white">{{ translate.t('progressPage.title') }}</h1>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.subtitle') }}</p>
     </div>
-    <div class="flex rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900">
-      @for (opt of [['today','Bugun'],['7d','7 kun'],['30d','30 kun'],['all','Barcha vaqt']]; track opt[0]) {
+    <div class="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1.5 dark:border-asphalt-700 dark:bg-asphalt-850">
+      @for (key of ranges; track key; let i = $index) {
         <button
           type="button"
-          class="rounded-lg px-3 py-1.5 text-sm font-semibold whitespace-nowrap transition"
-          [class.bg-white]="range() === opt[0]"
-          [class.dark:bg-slate-700]="range() === opt[0]"
-          [class.shadow-sm]="range() === opt[0]"
-          [class.text-slate-900]="range() === opt[0]"
-          [class.dark:text-white]="range() === opt[0]"
-          [class.text-slate-500]="range() !== opt[0]"
-          [class.dark:text-slate-400]="range() !== opt[0]"
-          (click)="setRange($any(opt[0]))"
+          (click)="setRange(key)"
+          class="flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold whitespace-nowrap transition"
+          [class]="range() === key ? 'bg-road-400 text-slate-900' : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-asphalt-800'"
         >
-          {{ opt[1] }}
+          <span
+            class="flex h-5 w-5 items-center justify-center rounded-full font-display text-[10px]"
+            [class]="range() === key ? 'bg-slate-900 text-road-400' : 'bg-slate-200 text-slate-600 dark:bg-asphalt-700 dark:text-slate-300'"
+          >{{ i + 1 }}</span>
+          {{ translate.t('progressPage.ranges.' + key) }}
         </button>
       }
     </div>
   </div>
 
   @if (store.loading()) {
-    <p class="animate-pulse mt-10 text-center text-lg text-slate-500 dark:text-slate-400">Yuklanmoqda...</p>
+    <p class="animate-pulse mt-10 text-center text-lg text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.loading') }}</p>
   } @else {
-    <!-- Hero -->
-    <section class="mt-6 rounded-3xl border border-brand-500/20 bg-gradient-to-br from-brand-50 to-white p-6 dark:from-brand-950 dark:to-slate-900 sm:p-8">
-      <div class="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">🎯 Sizning umumiy progressingiz</p>
-          <div class="mt-1 flex items-baseline gap-3">
-            <p class="text-6xl font-extrabold text-slate-900 dark:text-white">{{ overallPercent() }}%</p>
-            @if (heroDelta() !== null && heroDelta()! !== 0) {
-              <span
-                class="rounded-full px-2.5 py-1 text-sm font-bold"
-                [class.bg-status-good/15]="heroDelta()! > 0"
-                [class.text-status-good]="heroDelta()! > 0"
-                [class.bg-status-critical/15]="heroDelta()! < 0"
-                [class.text-status-critical]="heroDelta()! < 0"
-              >
-                {{ heroDelta()! > 0 ? '+' : '' }}{{ heroDelta() }}% {{ rangeLabel() }}
-              </span>
-            }
-          </div>
-          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {{ correctCount() }} / {{ totalQuestions() }} savol to'g'ri javoblandi
-          </p>
-        </div>
-        <div class="flex items-center gap-2 rounded-full bg-orange-500/15 px-4 py-2 text-sm font-semibold text-orange-500">
-          🔥 {{ streak.streakDays() }} kun ketma-ket
-        </div>
-      </div>
-
-      <div class="mt-6 flex h-6 w-full gap-0.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-        <div class="h-full rounded-l-full bg-status-good transition-all" [style.width.%]="correctPercentOfTotal()" [title]="'To\'g\'ri: ' + correctCount()"></div>
-        <div class="h-full bg-status-critical transition-all" [style.width.%]="wrongPercentOfTotal()" [title]="'Xato: ' + wrongCount()"></div>
-        <div class="h-full rounded-r-full bg-slate-300 transition-all dark:bg-slate-600" [style.width.%]="skippedPercentOfTotal()" [title]="'Ishlanmagan: ' + skippedCount()"></div>
-      </div>
-      <div class="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-sm">
-        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-status-good"></span>To'g'ri — <strong class="text-slate-900 dark:text-white">{{ correctCount() }}</strong></span>
-        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-status-critical"></span>Xato — <strong class="text-slate-900 dark:text-white">{{ wrongCount() }}</strong></span>
-        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>Ishlanmagan — <strong class="text-slate-900 dark:text-white">{{ skippedCount() }}</strong></span>
-      </div>
-    </section>
-
-    <!-- KPI row -->
-    <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">✅ To'g'ri javoblar</p>
-        <p class="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">{{ periodCorrect() }}</p>
-        @if (correctTrend() !== null) {
-          <p class="mt-0.5 text-xs font-semibold" [class.text-status-good]="correctTrend()! >= 0" [class.text-status-critical]="correctTrend()! < 0">
-            {{ correctTrend()! >= 0 ? '↑' : '↓' }} {{ correctTrend() }}%
-          </p>
-        }
-      </div>
-      <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">❌ Xato javoblar</p>
-        <p class="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">{{ periodWrong() }}</p>
-        @if (wrongTrend() !== null) {
-          <p class="mt-0.5 text-xs font-semibold" [class.text-status-critical]="wrongTrend()! >= 0" [class.text-status-good]="wrongTrend()! < 0">
-            {{ wrongTrend()! >= 0 ? '↑' : '↓' }} {{ wrongTrend() }}%
-          </p>
-        }
-      </div>
-      <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">📝 Ishlangan testlar</p>
-        <p class="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">{{ testsInRange().length }}</p>
-      </div>
-      <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">🎯 O'rtacha natija</p>
-        <p class="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">{{ averageScore() !== null ? averageScore() + '%' : '—' }}</p>
-      </div>
-    </section>
-
-    <!-- Radial gauges -->
-    <section class="mt-4 grid grid-cols-2 gap-3">
-      <div class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <svg viewBox="0 0 80 80" class="h-16 w-16 shrink-0 -rotate-90">
-          <circle cx="40" cy="40" r="34" fill="none" stroke-width="8" class="stroke-slate-100 dark:stroke-slate-800" />
-          <circle
-            cx="40" cy="40" r="34" fill="none" stroke-width="8" stroke-linecap="round"
-            class="stroke-chart-blue dark:stroke-chart-blue-dark"
-            [attr.stroke-dasharray]="2 * 3.1416 * 34"
-            [attr.stroke-dashoffset]="2 * 3.1416 * 34 * (1 - overallPercent() / 100)"
-          />
-        </svg>
-        <div>
-          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">🎯 Test natijasi</p>
-          <p class="text-xl font-extrabold text-slate-900 dark:text-white">{{ overallPercent() }}%</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <svg viewBox="0 0 80 80" class="h-16 w-16 shrink-0 -rotate-90">
-          <circle cx="40" cy="40" r="34" fill="none" stroke-width="8" class="stroke-slate-100 dark:stroke-slate-800" />
-          <circle
-            cx="40" cy="40" r="34" fill="none" stroke-width="8" stroke-linecap="round"
-            class="stroke-chart-orange dark:stroke-chart-orange-dark"
-            [attr.stroke-dasharray]="2 * 3.1416 * 34"
-            [attr.stroke-dashoffset]="2 * 3.1416 * 34 * (1 - knowledgeLevel() / 100)"
-          />
-        </svg>
-        <div>
-          <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">📚 Bilim darajasi</p>
-          <p class="text-xl font-extrabold text-slate-900 dark:text-white">{{ knowledgeLevel() }}%</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Progress dynamics line chart -->
-    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 class="text-base font-bold text-slate-900 dark:text-white">📈 Progress dinamikasi</h2>
-          <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Kunlik to'g'ri va xato javoblar soni</p>
-        </div>
-        @if (hoveredDay(); as day) {
-          <div class="rounded-xl bg-slate-50 px-4 py-2 text-right text-sm dark:bg-slate-800">
-            <div class="font-semibold text-slate-900 dark:text-white">{{ dayLabel(day.date) }}</div>
-            <div class="text-status-good">To'g'ri: {{ day.correct }}</div>
-            <div class="text-status-critical">Xato: {{ day.wrong }}</div>
-          </div>
-        }
-      </div>
-
-      @if (!hasHistory()) {
-        <p class="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
-          Hali yetarli ma'lumot yo'q. Testlarni yechishni davom eting — grafik shu yerda shakllanadi.
-        </p>
-      } @else {
-        <div class="mt-4 flex items-center gap-4 text-xs">
-          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span class="h-2 w-2 rounded-full bg-status-good"></span>To'g'ri</span>
-          <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span class="h-2 w-2 rounded-full bg-status-critical"></span>Xato</span>
-        </div>
-        <div class="relative mt-2">
-          <svg viewBox="0 0 600 160" preserveAspectRatio="none" class="h-40 w-full overflow-visible">
-            <line x1="0" y1="159" x2="600" y2="159" class="stroke-slate-200 dark:stroke-slate-700" stroke-width="1" />
-            <path [attr.d]="correctAreaPath()" class="fill-status-good/10" />
-            <polyline [attr.points]="correctLinePoints()" fill="none" class="stroke-status-good" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
-            <polyline [attr.points]="wrongLinePoints()" fill="none" class="stroke-status-critical" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
-            @for (d of dailySeries(); track d.key; let i = $index) {
-              <rect
-                [attr.x]="chartXFor(i) - (600 / dailySeries().length / 2)"
-                y="0"
-                [attr.width]="600 / dailySeries().length"
-                height="160"
-                fill="transparent"
-                (mouseenter)="hoverDay(i)"
-                (mouseleave)="clearHover()"
-                class="cursor-pointer"
-              />
-            }
+    <!-- Guvohnoma + yoqilg'i datchigi -->
+    <section class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
+      <!-- Haydovchilik guvohnomasi (O'zbekiston guvohnomasi shabloni asosida, o'quv varianti) -->
+      <div class="flex flex-col gap-3">
+        <div class="@container group relative aspect-[1.586] w-full overflow-hidden rounded-[22px] font-card text-[#1f2a5c] shadow-[0_18px_40px_-12px_rgba(31,42,92,0.45)] ring-1 ring-white/60 transition-transform duration-300 hover:-translate-y-1">
+          <!-- fon: yumshoq gradient + gilosh to'lqinlari + rozetka -->
+          <svg class="absolute inset-0 h-full w-full" viewBox="0 0 856 540" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+              <linearGradient id="lic-bg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#fbe9ef" />
+                <stop offset="0.55" stop-color="#f3e3f0" />
+                <stop offset="1" stop-color="#e6e0f5" />
+              </linearGradient>
+              <pattern id="lic-wave" width="64" height="14" patternUnits="userSpaceOnUse">
+                <path d="M0 7 Q16 0 32 7 T64 7" fill="none" stroke="#c98aa8" stroke-width="0.8" stroke-opacity="0.35" />
+              </pattern>
+              <linearGradient id="lic-holo" x1="0" y1="0" x2="1" y2="0.6">
+                <stop offset="0.35" stop-color="#fff" stop-opacity="0" />
+                <stop offset="0.5" stop-color="#bfe9ff" stop-opacity="0.45" />
+                <stop offset="0.58" stop-color="#ffd6f1" stop-opacity="0.35" />
+                <stop offset="0.7" stop-color="#fff" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <rect width="856" height="540" fill="url(#lic-bg)" />
+            <rect width="856" height="540" fill="url(#lic-wave)" />
+            <g fill="none" stroke="#8f7cc4" stroke-opacity="0.22">
+              @for (r of [40, 58, 76, 94, 112, 130]; track r) {
+                <circle cx="742" cy="420" [attr.r]="r" stroke-dasharray="3 5" />
+              }
+            </g>
+            <!-- chap chetdagi naqshli polosa -->
+            <rect width="34" height="540" fill="#a99bd6" fill-opacity="0.35" />
+            <path d="M34 0 Q22 30 34 60 T34 120 T34 180 T34 240 T34 300 T34 360 T34 420 T34 480 T34 540" fill="none" stroke="#8f7cc4" stroke-opacity="0.6" stroke-width="2" />
+            <rect width="856" height="540" fill="url(#lic-holo)" class="opacity-70 transition-opacity duration-500 group-hover:opacity-100" />
           </svg>
-          <div class="mt-1 flex justify-between text-xs text-slate-400 dark:text-slate-500">
-            @for (tick of chartTicks(); track tick.index) {
-              <span>{{ tick.label }}</span>
+
+          <div class="absolute inset-0 flex flex-col py-[4.5cqw] pr-[5cqw] pl-[8cqw]">
+            <!-- sarlavha -->
+            <div class="flex items-center gap-[2.5cqw]">
+              <div class="flex aspect-[2/1] w-[11cqw] shrink-0 flex-col overflow-hidden rounded-[0.6cqw] shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
+                <span class="flex-[10] bg-[#1eb5e6]"></span>
+                <span class="flex-[1] bg-[#ce1126]"></span>
+                <span class="flex-[10] bg-white"></span>
+                <span class="flex-[1] bg-[#ce1126]"></span>
+                <span class="flex-[10] bg-[#1eb53a]"></span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-[3.6cqw] leading-none font-bold tracking-[0.04em] uppercase">{{ translate.t('progressPage.license.title') }}</p>
+                <p class="mt-[0.8cqw] truncate text-[1.5cqw] tracking-[0.12em] text-[#1f2a5c]/60 uppercase">Водительское удостоверение · Driving licence</p>
+              </div>
+              <div class="flex h-[7.5cqw] w-[11cqw] shrink-0 items-center justify-center rounded-[50%] border-[0.35cqw] border-[#1f2a5c]/70 bg-white/40">
+                <span class="text-[3.6cqw] leading-none font-bold text-[#23874b]">UZ</span>
+              </div>
+            </div>
+
+            <div class="mt-[4cqw] flex min-h-0 flex-1 gap-[4.5cqw]">
+              <!-- rasm + imzo -->
+              <div class="flex w-[23cqw] shrink-0 flex-col">
+                <div class="relative">
+                  <div class="flex aspect-[3/4] w-full items-center justify-center rounded-[1.2cqw] bg-gradient-to-br from-[#5b6fd6] to-[#2a3a8c] text-[11cqw] leading-none font-bold text-white shadow-[inset_0_-2cqw_4cqw_rgba(0,0,0,0.25)] ring-[0.4cqw] ring-white">
+                    {{ driverInitial() }}
+                  </div>
+                  <!-- gologramma -->
+                  <div class="absolute -right-[2.5cqw] -bottom-[2.5cqw] h-[8cqw] w-[8cqw] rounded-full bg-[conic-gradient(from_0deg,#9be7ff,#ffc4f0,#c8ffd9,#fff1a8,#9be7ff)] opacity-80 ring-[0.3cqw] ring-white/80"></div>
+                </div>
+                <p class="mt-[2.4cqw] truncate font-signature text-[3.6cqw] leading-none text-[#1f2a5c]/85">{{ driverName() }}</p>
+                <span class="mt-[0.4cqw] h-px w-full bg-[#1f2a5c]/30"></span>
+              </div>
+
+              <!-- maydonlar -->
+              <dl class="grid min-w-0 flex-1 grid-cols-2 content-start gap-x-[3cqw] gap-y-[1.9cqw] pr-[19cqw]">
+                <div class="col-span-2 min-w-0">
+                  <dt class="text-[1.45cqw] tracking-[0.1em] text-[#1f2a5c]/55 uppercase">1 · {{ translate.t('progressPage.license.name') }}</dt>
+                  <dd class="truncate text-[3.3cqw] leading-tight font-bold uppercase">{{ driverName() }}</dd>
+                </div>
+                <div class="col-span-2 min-w-0">
+                  <dt class="text-[1.45cqw] tracking-[0.1em] text-[#1f2a5c]/55 uppercase">3 · {{ translate.t('progressPage.license.stampCenter') }}</dt>
+                  <dd class="truncate text-[2.4cqw] leading-tight font-bold uppercase">{{ translate.t('common.brand') }}</dd>
+                </div>
+                <div class="min-w-0">
+                  <dt class="text-[1.45cqw] tracking-[0.1em] text-[#1f2a5c]/55 uppercase">4a · {{ translate.t('progressPage.license.since') }}</dt>
+                  <dd class="truncate text-[2.4cqw] leading-tight font-bold">{{ startedAt() }}</dd>
+                </div>
+                <div class="min-w-0">
+                  <dt class="text-[1.45cqw] tracking-[0.1em] text-[#1f2a5c]/55 uppercase">4b · {{ translate.t('progressPage.license.today') }}</dt>
+                  <dd class="truncate text-[2.4cqw] leading-tight font-bold">{{ todayLabel() }}</dd>
+                </div>
+                <div class="min-w-0">
+                  <dt class="text-[1.45cqw] tracking-[0.1em] text-[#1f2a5c]/55 uppercase">5 · {{ translate.t('progressPage.license.serial') }}</dt>
+                  <dd class="truncate font-mono text-[2.3cqw] leading-tight font-bold tracking-wider">{{ licenseSerial() }}</dd>
+                </div>
+                <div class="min-w-0">
+                  <dt class="text-[1.45cqw] tracking-[0.1em] text-[#1f2a5c]/55 uppercase">8 · {{ translate.t('progressPage.license.streak') }}</dt>
+                  <dd class="truncate text-[2.4cqw] leading-tight font-bold">🔥 {{ translate.t('progressPage.license.days', { days: streak.streakDays() }) }}</dd>
+                </div>
+                <div class="col-span-2 flex items-center gap-[1.5cqw]">
+                  <dt class="text-[1.45cqw] tracking-[0.1em] text-[#1f2a5c]/55 uppercase">9 · {{ translate.t('progressPage.license.category') }}</dt>
+                  <dd class="flex gap-[0.8cqw]">
+                    <span class="rounded-[0.6cqw] bg-[#1f2a5c] px-[1.4cqw] py-[0.3cqw] text-[2.2cqw] leading-none font-bold text-white">B</span>
+                    <span class="rounded-[0.6cqw] border border-[#1f2a5c]/25 px-[1.4cqw] py-[0.3cqw] text-[2.2cqw] leading-none font-bold text-[#1f2a5c]/30">A</span>
+                    <span class="rounded-[0.6cqw] border border-[#1f2a5c]/25 px-[1.4cqw] py-[0.3cqw] text-[2.2cqw] leading-none font-bold text-[#1f2a5c]/30">C</span>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <!-- mashina o'qiydigan qator -->
+            <p class="mt-[2cqw] truncate font-mono text-[1.7cqw] tracking-[0.28em] text-[#1f2a5c]/45 uppercase">{{ mrzLine() }}</p>
+          </div>
+
+          <!-- o'ng past: rozetka ustidagi tayyorlik halqasi -->
+          <div class="absolute right-[5.5cqw] bottom-[9cqw] flex h-[21cqw] w-[21cqw] items-center justify-center">
+            <svg viewBox="0 0 100 100" class="absolute inset-0 h-full w-full -rotate-90">
+              <circle cx="50" cy="50" r="42" fill="rgba(255,255,255,0.55)" stroke="#1f2a5c" stroke-opacity="0.12" stroke-width="8" />
+              <circle
+                cx="50" cy="50" r="42" fill="none" stroke-width="8" stroke-linecap="round"
+                [attr.stroke]="examReady() ? '#23874b' : '#6d4fc4'"
+                [attr.stroke-dasharray]="2 * 3.1416 * 42"
+                [attr.stroke-dashoffset]="2 * 3.1416 * 42 * (1 - overallPercent() / 100)"
+                class="transition-[stroke-dashoffset] duration-700"
+              />
+            </svg>
+            <div class="relative flex flex-col items-center leading-none">
+              <span class="text-[4.4cqw] font-bold" [class]="examReady() ? 'text-[#23874b]' : 'text-[#6d4fc4]'">{{ overallPercent() }}%</span>
+              <span class="mt-[0.6cqw] max-w-[15cqw] text-center text-[1.3cqw] font-bold tracking-wide text-[#1f2a5c]/60 uppercase">
+                {{ examReady() ? translate.t('progressPage.license.stampReady') : translate.t('progressPage.license.readiness') }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- karta ostida: tayyorlik chizig'i -->
+        <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-asphalt-700 dark:bg-asphalt-850">
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.license.readiness') }}</span>
+          <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-asphalt-700">
+            <div class="h-full rounded-full bg-road-400 transition-all duration-700" [style.width.%]="overallPercent()"></div>
+          </div>
+          <span class="font-display text-sm text-slate-900 dark:text-white">{{ overallPercent() }}%</span>
+          @if (heroDelta() !== null && heroDelta()! !== 0) {
+            <span class="rounded-full px-2 py-0.5 text-xs font-bold" [class]="heroDelta()! > 0 ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/15 text-red-600 dark:text-red-400'">
+              {{ heroDelta()! > 0 ? '+' : '' }}{{ heroDelta() }}% · {{ rangeLabel() }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Yoqilg'i datchigi -->
+      <div class="flex flex-col rounded-3xl border border-slate-200 bg-white p-5 dark:border-asphalt-700 dark:bg-asphalt-850 sm:p-6">
+        <h2 class="font-display text-sm text-slate-900 dark:text-white">⛽ {{ translate.t('progressPage.fuel.title') }}</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.fuel.sub', { goal: goalTarget() }) }}</p>
+        <svg viewBox="0 0 200 120" class="mx-auto mt-2 w-full max-w-[240px]">
+          <path d="M30 100 A75 75 0 0 1 170 100" fill="none" class="stroke-slate-200 dark:stroke-asphalt-700" stroke-width="14" stroke-linecap="round" />
+          <path d="M30 100 A75 75 0 0 1 58 41" fill="none" stroke="#ef4444" stroke-width="14" stroke-linecap="round" />
+          <text x="22" y="118" font-size="13" class="fill-red-500 font-display">E</text>
+          <text x="168" y="118" font-size="13" class="fill-emerald-500 font-display">F</text>
+          <text x="100" y="78" text-anchor="middle" font-size="20" class="fill-slate-400">⛽</text>
+          <g class="transition-transform duration-700 ease-out" [style.transform]="'rotate(' + fuelAngle() + 'deg)'" style="transform-origin: 100px 100px">
+            <line x1="100" y1="100" x2="100" y2="38" stroke="#f5c518" stroke-width="4" stroke-linecap="round" />
+          </g>
+          <circle cx="100" cy="100" r="8" class="fill-slate-700 dark:fill-slate-200" />
+        </svg>
+        <p class="mt-1 text-center font-display text-2xl text-slate-900 dark:text-white">{{ answeredToday() }} / {{ goalTarget() }}</p>
+        <p class="mt-1 text-center text-sm font-semibold" [class]="goalRemaining() === 0 ? 'text-emerald-500' : 'text-slate-600 dark:text-slate-300'">
+          {{ goalRemaining() === 0 ? translate.t('progressPage.fuel.done') : translate.t('progressPage.fuel.left', { count: goalRemaining() }) }}
+        </p>
+      </div>
+    </section>
+
+    <!-- Odometr ko'rsatkichlari -->
+    <section class="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      @for (kpi of [
+        { label: 'progressPage.odometer.correct', value: periodCorrect(), suffix: '', trend: correctTrend(), good: true, dot: 'bg-emerald-500' },
+        { label: 'progressPage.odometer.wrong', value: periodWrong(), suffix: '', trend: wrongTrend(), good: false, dot: 'bg-red-500' },
+        { label: 'progressPage.odometer.tests', value: testsInRange().length, suffix: '', trend: null, good: true, dot: 'bg-sky-500' },
+        { label: 'progressPage.odometer.avg', value: averageScore(), suffix: '%', trend: null, good: true, dot: 'bg-road-400' }
+      ]; track kpi.label) {
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-asphalt-700 dark:bg-asphalt-850">
+          <p class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400"><span class="h-2 w-2 rounded-full" [class]="kpi.dot"></span>{{ translate.t(kpi.label) }}</p>
+          <div class="mt-2 flex items-center gap-2">
+            <div class="flex gap-0.5 rounded-lg bg-asphalt-900 p-1">
+              @for (d of odometerDigits(kpi.value, kpi.suffix); track $index) {
+                <span class="flex h-8 w-6 items-center justify-center rounded-[4px] bg-gradient-to-b from-white to-slate-200 font-display text-base text-slate-900 shadow-inner">{{ d }}</span>
+              }
+            </div>
+            @if (kpi.trend !== null) {
+              <span class="text-xs font-bold" [class]="(kpi.trend >= 0) === kpi.good ? 'text-emerald-500' : 'text-red-500'">
+                {{ kpi.trend >= 0 ? '↑' : '↓' }}{{ kpi.trend }}%
+              </span>
             }
           </div>
         </div>
       }
     </section>
 
-    <!-- Donut + Topic bars -->
-    <section class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h2 class="text-base font-bold text-slate-900 dark:text-white">📊 Javoblar taqsimoti</h2>
-        <div class="mt-4 flex items-center justify-center">
-          <svg viewBox="0 0 120 120" class="h-40 w-40 -rotate-90">
-            <circle cx="60" cy="60" r="50" fill="none" stroke-width="14" class="stroke-slate-100 dark:stroke-slate-800" />
-            <circle
-              cx="60" cy="60" r="50" fill="none" stroke-width="14" class="stroke-status-good"
-              [attr.stroke-dasharray]="(correctPercentOfTotal() / 100) * (2 * 3.1416 * 50) + ' ' + (2 * 3.1416 * 50)"
-              [attr.title]="'To\'g\'ri: ' + correctCount()"
-            />
-            <circle
-              cx="60" cy="60" r="50" fill="none" stroke-width="14" class="stroke-status-critical"
-              [attr.stroke-dasharray]="(wrongPercentOfTotal() / 100) * (2 * 3.1416 * 50) + ' ' + (2 * 3.1416 * 50)"
-              [attr.stroke-dashoffset]="-(correctPercentOfTotal() / 100) * (2 * 3.1416 * 50)"
-            />
+    <!-- Harakat dinamikasi — asfalt fonda -->
+    <section class="mt-4 rounded-3xl border border-slate-200 bg-white p-5 dark:border-asphalt-700 dark:bg-asphalt-850 sm:p-6">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="font-display text-sm text-slate-900 dark:text-white">{{ translate.t('progressPage.dynamics.title') }}</h2>
+          <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.dynamics.sub') }}</p>
+        </div>
+        @if (hasHistory()) {
+          @if (hoveredDay(); as day) {
+            <div class="rounded-xl bg-slate-50 px-4 py-2 text-right text-xs dark:bg-asphalt-900">
+              <div class="font-semibold text-slate-900 dark:text-white">{{ dayLabel(day.date) }}</div>
+              <div class="text-emerald-500">{{ translate.t('progressPage.dynamics.correct') }}: {{ day.correct }}</div>
+              <div class="text-red-500">{{ translate.t('progressPage.dynamics.wrong') }}: {{ day.wrong }}</div>
+            </div>
+          }
+        }
+      </div>
+
+      @if (!hasHistory()) {
+        <p class="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.dynamics.empty') }}</p>
+      } @else {
+        <div class="relative mt-4 rounded-2xl bg-asphalt-800 p-3 dark:bg-asphalt-900">
+          <svg viewBox="0 0 600 160" preserveAspectRatio="none" class="h-44 w-full overflow-visible">
+            <line x1="0" y1="80" x2="600" y2="80" stroke="#f5c518" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="18 14" vector-effect="non-scaling-stroke" />
+            <line x1="0" y1="2" x2="600" y2="2" stroke="#fff" stroke-opacity="0.25" stroke-width="2" vector-effect="non-scaling-stroke" />
+            <line x1="0" y1="158" x2="600" y2="158" stroke="#fff" stroke-opacity="0.25" stroke-width="2" vector-effect="non-scaling-stroke" />
+            <path [attr.d]="correctAreaPath()" fill="#22c55e" fill-opacity="0.12" />
+            <polyline [attr.points]="correctLinePoints()" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+            <polyline [attr.points]="wrongLinePoints()" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+            @for (d of dailySeries(); track d.key; let i = $index) {
+              <rect
+                [attr.x]="chartXFor(i) - (600 / dailySeries().length / 2)" y="0"
+                [attr.width]="600 / dailySeries().length" height="160"
+                fill="transparent" class="cursor-pointer"
+                (mouseenter)="hoverDay(i)" (mouseleave)="clearHover()"
+              />
+            }
           </svg>
-          <div class="absolute text-center">
-            <p class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ totalQuestions() }}</p>
-            <p class="text-xs text-slate-500 dark:text-slate-400">jami savol</p>
+          <div class="mt-1 flex justify-between text-[11px] text-slate-400">
+            @for (tick of chartTicks(); track tick.index) {
+              <span>{{ tick.label }}</span>
+            }
           </div>
         </div>
-        <div class="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-1.5 text-sm">
-          <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-status-good"></span>To'g'ri — {{ correctPercentOfTotal() | number: '1.0-0' }}%</span>
-          <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-status-critical"></span>Xato — {{ wrongPercentOfTotal() | number: '1.0-0' }}%</span>
-          <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>Ishlanmagan — {{ skippedPercentOfTotal() | number: '1.0-0' }}%</span>
+        <div class="mt-3 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+          <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>{{ translate.t('progressPage.dynamics.correct') }}</span>
+          <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-red-500"></span>{{ translate.t('progressPage.dynamics.wrong') }}</span>
+        </div>
+      }
+    </section>
+
+    <!-- Svetofor + mavzular -->
+    <section class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.6fr]">
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-asphalt-700 dark:bg-asphalt-850 sm:p-6">
+        <h2 class="font-display text-sm text-slate-900 dark:text-white">🚦 {{ translate.t('progressPage.lights.title') }}</h2>
+        <div class="mt-4 flex items-center gap-5">
+          <div class="flex flex-col items-center">
+            <div class="flex flex-col gap-2.5 rounded-2xl border-4 border-slate-800 bg-slate-900 px-3 py-3.5 shadow-lg">
+              <span class="h-11 w-11 rounded-full bg-red-500 shadow-[0_0_18px_rgba(239,68,68,0.7)]" [style.opacity]="lampOpacity(wrongPercentOfTotal())"></span>
+              <span class="h-11 w-11 rounded-full bg-road-400 shadow-[0_0_18px_rgba(245,197,24,0.7)]" [style.opacity]="lampOpacity(skippedPercentOfTotal())"></span>
+              <span class="h-11 w-11 rounded-full bg-emerald-500 shadow-[0_0_18px_rgba(34,197,94,0.7)]" [style.opacity]="lampOpacity(correctPercentOfTotal())"></span>
+            </div>
+            <span class="h-8 w-2 bg-slate-500"></span>
+          </div>
+          <div class="flex flex-1 flex-col gap-3 text-sm">
+            <div>
+              <p class="text-xs text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.lights.wrong') }}</p>
+              <p class="font-display text-lg text-red-500">{{ wrongCount() }} <span class="text-xs text-slate-400">· {{ wrongPercentOfTotal() | number: '1.0-0' }}%</span></p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.lights.left') }}</p>
+              <p class="font-display text-lg text-road-500 dark:text-road-400">{{ skippedCount() }} <span class="text-xs text-slate-400">· {{ skippedPercentOfTotal() | number: '1.0-0' }}%</span></p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.lights.correct') }}</p>
+              <p class="font-display text-lg text-emerald-500">{{ correctCount() }} <span class="text-xs text-slate-400">· {{ correctPercentOfTotal() | number: '1.0-0' }}%</span></p>
+            </div>
+            <p class="text-xs text-slate-400">{{ translate.t('progressPage.lights.total', { count: totalQuestions() }) }}</p>
+          </div>
         </div>
       </div>
 
-      <div class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h2 class="text-base font-bold text-slate-900 dark:text-white">🎯 Mavzular progressi</h2>
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-asphalt-700 dark:bg-asphalt-850 sm:p-6">
+        <h2 class="font-display text-sm text-slate-900 dark:text-white">🛣️ {{ translate.t('progressPage.topics.title') }}</h2>
         @if (topicStats().length === 0) {
-          <p class="mt-6 text-sm text-slate-500 dark:text-slate-400">Hali hech qanday mavzu bo'yicha test yechilmagan.</p>
+          <p class="mt-6 text-sm text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.topics.empty') }}</p>
         } @else {
-          <div class="mt-4 flex flex-col gap-3">
+          <div class="mt-4 flex max-h-[360px] flex-col gap-3 overflow-y-auto pr-1">
             @for (topic of topicStats(); track topic.id) {
-              <a [routerLink]="['/tests/topics', topic.id]" class="block group">
+              <a [routerLink]="['/tests/topics', topic.id]" class="group block">
                 <div class="mb-1 flex items-center justify-between gap-3 text-sm">
-                  <span class="font-medium text-slate-700 group-hover:text-brand-600 dark:text-slate-300 dark:group-hover:text-brand-400">{{ topic.name }}</span>
-                  <span class="shrink-0 text-slate-500 dark:text-slate-400">{{ topic.percent }}%</span>
+                  <span class="truncate font-medium text-slate-700 group-hover:text-road-500 dark:text-slate-300 dark:group-hover:text-road-400">{{ topic.name }}</span>
+                  <span class="shrink-0 font-display text-xs text-slate-500 dark:text-slate-400">{{ topic.percent }}%</span>
                 </div>
-                <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                  <div class="h-full rounded-full bg-chart-blue transition-all dark:bg-chart-blue-dark" [style.width.%]="topic.percent"></div>
+                <!-- yo'l bo'lagi: asfalt + o'rta chiziq, bosib o'tilgan qismi rangli -->
+                <div class="relative h-3 w-full overflow-hidden rounded-full bg-asphalt-700">
+                  <div class="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+                       [class]="topic.percent >= 80 ? 'bg-emerald-500' : topic.percent >= 50 ? 'bg-road-400' : 'bg-red-500'"
+                       [style.width.%]="topic.percent"></div>
+                  <div class="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 [background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.55)_0_8px,transparent_8px_16px)]"></div>
                 </div>
               </a>
             }
@@ -241,116 +333,137 @@
       </div>
     </section>
 
-    <!-- Weak topics -->
-    <section class="mt-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-      <h2 class="text-base font-bold text-slate-900 dark:text-white">⚠️ E'tibor talab qiladigan mavzular</h2>
-      @if (weakTopics().length === 0) {
-        <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">Hali baholash uchun yetarli ma'lumot yo'q.</p>
-      } @else {
-        <div class="mt-4 flex flex-col gap-2">
-          @for (topic of weakTopics(); track topic.id; let i = $index) {
-            <div class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/60">
-              <span class="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                {{ i === 0 ? '🔴' : i === 1 ? '🟠' : '🟡' }} {{ topic.name }} — <strong class="text-slate-900 dark:text-white">{{ topic.percent }}%</strong>
-              </span>
-              <a [routerLink]="['/tests/topics', topic.id]" class="shrink-0 text-sm font-semibold text-brand-600 hover:underline dark:text-brand-400">Mashq qilish →</a>
-            </div>
+    <!-- Biletlar parkovkasi -->
+    <section class="mt-4 rounded-3xl border border-slate-200 bg-white p-5 dark:border-asphalt-700 dark:bg-asphalt-850 sm:p-6">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="flex items-center gap-2 font-display text-sm text-slate-900 dark:text-white">
+            <span class="flex h-6 w-6 items-center justify-center rounded-md bg-sign-blue font-display text-sm text-white">P</span>
+            {{ translate.t('progressPage.tickets.title') }}
+          </h2>
+          <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.tickets.sub') }}</p>
+        </div>
+        <div class="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm bg-emerald-500"></span>{{ translate.t('progressPage.tickets.green') }} · {{ ticketSummary().green }}</span>
+          <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm bg-road-400"></span>{{ translate.t('progressPage.tickets.yellow') }} · {{ ticketSummary().yellow }}</span>
+          <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm bg-red-500"></span>{{ translate.t('progressPage.tickets.red') }} · {{ ticketSummary().red }}</span>
+          <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm border border-dashed border-slate-400"></span>{{ translate.t('progressPage.tickets.none') }} · {{ ticketSummary().none }}</span>
+        </div>
+      </div>
+      <div class="mt-4 rounded-2xl bg-asphalt-800 p-3 dark:bg-asphalt-900">
+        <div class="grid grid-cols-6 gap-1.5 sm:grid-cols-11">
+          @for (spot of ticketSpots(); track spot.number) {
+            <a
+              [routerLink]="['/tests/tickets', spot.number]"
+              class="flex h-11 items-center justify-center rounded-md border-x-2 border-white/60 font-display text-xs transition hover:-translate-y-0.5"
+              [class]="spot.color === 'green' ? 'bg-emerald-500 text-white' : spot.color === 'yellow' ? 'bg-road-400 text-slate-900' : spot.color === 'red' ? 'bg-red-500 text-white' : 'bg-transparent text-slate-400 hover:bg-white/5'"
+            >{{ spot.number }}</a>
           }
         </div>
-      }
+      </div>
     </section>
 
-    <!-- Strong topics + Goal -->
+    <!-- Xavfli burilishlar + ishonchli yo'llar -->
     <section class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h2 class="text-base font-bold text-slate-900 dark:text-white">🏆 Kuchli mavzularim</h2>
-        @if (strongTopics().length === 0) {
-          <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">Hali baholash uchun yetarli ma'lumot yo'q.</p>
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-asphalt-700 dark:bg-asphalt-850 sm:p-6">
+        <h2 class="flex items-center gap-2 font-display text-sm text-slate-900 dark:text-white">
+          <svg viewBox="0 0 24 22" class="h-5 w-5" aria-hidden="true"><polygon points="12,2 22,20 2,20" fill="#fff" stroke="#e24b4a" stroke-width="3" stroke-linejoin="round" /><text x="12" y="17.5" text-anchor="middle" font-size="9" fill="#a32d2d">!</text></svg>
+          {{ translate.t('progressPage.weak.title') }}
+        </h2>
+        @if (weakTopics().length === 0) {
+          <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.weak.empty') }}</p>
         } @else {
           <div class="mt-4 flex flex-col gap-2">
-            @for (topic of strongTopics(); track topic.id; let i = $index) {
-              <div class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/60">
-                <span class="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {{ i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉' }} {{ topic.name }}
+            @for (topic of weakTopics(); track topic.id) {
+              <div class="flex items-center justify-between gap-3 rounded-xl border-l-4 border-red-500 bg-red-500/5 px-4 py-3">
+                <span class="min-w-0 text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <span class="block truncate">{{ topic.name }}</span>
+                  <span class="font-display text-xs text-red-500">{{ topic.percent }}%</span>
                 </span>
-                <strong class="text-sm text-slate-900 dark:text-white">{{ topic.percent }}%</strong>
+                <a [routerLink]="['/tests/topics', topic.id]" class="shrink-0 rounded-lg bg-road-400 px-3 py-1.5 text-xs font-semibold text-slate-900 transition hover:bg-road-300">
+                  {{ translate.t('progressPage.weak.practice') }} →
+                </a>
               </div>
             }
           </div>
         }
       </div>
 
-      <div class="rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 p-6">
-        <h2 class="text-base font-bold text-white">🎯 Maqsad va natija</h2>
-        <p class="mt-1 text-sm text-white/80">Bugungi maqsad: {{ goalTarget }} ta savol</p>
-        <p class="mt-3 text-3xl font-extrabold text-white">{{ answeredToday() }} / {{ goalTarget }}</p>
-        <div class="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-white/20">
-          <div class="h-full rounded-full bg-white transition-all" [style.width.%]="goalPercent()"></div>
-        </div>
-        @if (goalRemaining() > 0) {
-          <p class="mt-3 text-sm font-semibold text-white">Yana {{ goalRemaining() }} ta savol yeching</p>
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-asphalt-700 dark:bg-asphalt-850 sm:p-6">
+        <h2 class="flex items-center gap-2 font-display text-sm text-slate-900 dark:text-white">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true"><rect x="5" y="5" width="14" height="14" fill="#f5c518" stroke="#fff" stroke-width="2" transform="rotate(45 12 12)" /></svg>
+          {{ translate.t('progressPage.strong.title') }}
+        </h2>
+        @if (strongTopics().length === 0) {
+          <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.strong.empty') }}</p>
         } @else {
-          <p class="mt-3 text-sm font-semibold text-white">✅ Bugungi maqsadga yetdingiz!</p>
+          <div class="mt-4 flex flex-col gap-2">
+            @for (topic of strongTopics(); track topic.id; let i = $index) {
+              <div class="flex items-center justify-between gap-3 rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5 px-4 py-3">
+                <span class="flex min-w-0 items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 font-display text-xs text-white">{{ i + 1 }}</span>
+                  <span class="truncate">{{ topic.name }}</span>
+                </span>
+                <strong class="font-display text-sm text-emerald-500">{{ topic.percent }}%</strong>
+              </div>
+            }
+          </div>
         }
       </div>
     </section>
 
-    <!-- Activity heatmap -->
-    <section class="mt-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-      <h2 class="text-base font-bold text-slate-900 dark:text-white">📅 O'qish faolligi</h2>
-      <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Oxirgi 12 hafta</p>
+    <!-- Yurilgan kunlar (faollik) -->
+    <section class="mt-4 rounded-3xl border border-slate-200 bg-white p-5 dark:border-asphalt-700 dark:bg-asphalt-850 sm:p-6">
+      <h2 class="font-display text-sm text-slate-900 dark:text-white">📅 {{ translate.t('progressPage.activity.title') }}</h2>
+      <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.activity.sub') }}</p>
       <div class="mt-4 flex gap-1 overflow-x-auto pb-1">
         @for (week of heatmapWeeks(); track $index) {
           <div class="flex flex-col gap-1">
             @for (cell of week; track cell.key) {
               <div
                 class="h-3.5 w-3.5 rounded-sm"
-                [class.bg-slate-100]="cell.level === 0"
-                [class.dark:bg-slate-800]="cell.level === 0"
-                [class.bg-brand-200]="cell.level === 1"
-                [class.dark:bg-brand-900]="cell.level === 1"
-                [class.bg-brand-300]="cell.level === 2"
-                [class.dark:bg-brand-700]="cell.level === 2"
-                [class.bg-brand-500]="cell.level === 3"
-                [class.dark:bg-brand-500]="cell.level === 3"
-                [class.bg-brand-700]="cell.level === 4"
-                [class.dark:bg-brand-400]="cell.level === 4"
-                [title]="dayLabel(cell.date) + ': ' + cell.count + ' ta savol'"
+                [class]="cell.level === 0 ? 'bg-slate-200 dark:bg-asphalt-700' : cell.level === 1 ? 'bg-road-400/25' : cell.level === 2 ? 'bg-road-400/50' : cell.level === 3 ? 'bg-road-400/75' : 'bg-road-400'"
+                [title]="translate.t('progressPage.activity.cell', { date: dayLabel(cell.date), count: cell.count })"
               ></div>
             }
           </div>
         }
       </div>
-      <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
-        <span>Kam</span>
-        <span class="h-3 w-3 rounded-sm bg-slate-100 dark:bg-slate-800"></span>
-        <span class="h-3 w-3 rounded-sm bg-brand-200 dark:bg-brand-900"></span>
-        <span class="h-3 w-3 rounded-sm bg-brand-300 dark:bg-brand-700"></span>
-        <span class="h-3 w-3 rounded-sm bg-brand-500 dark:bg-brand-500"></span>
-        <span class="h-3 w-3 rounded-sm bg-brand-700 dark:bg-brand-400"></span>
-        <span>Ko'p</span>
+      <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
+        <span>{{ translate.t('progressPage.activity.less') }}</span>
+        <span class="h-3 w-3 rounded-sm bg-slate-200 dark:bg-asphalt-700"></span>
+        <span class="h-3 w-3 rounded-sm bg-road-400/25"></span>
+        <span class="h-3 w-3 rounded-sm bg-road-400/50"></span>
+        <span class="h-3 w-3 rounded-sm bg-road-400/75"></span>
+        <span class="h-3 w-3 rounded-sm bg-road-400"></span>
+        <span>{{ translate.t('progressPage.activity.more') }}</span>
       </div>
     </section>
 
-    <!-- Recent tests -->
-    <section class="mt-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-      <h2 class="text-base font-bold text-slate-900 dark:text-white">📝 So'nggi testlar</h2>
+    <!-- So'nggi imtihon talonlari -->
+    <section class="mt-4 rounded-3xl border border-slate-200 bg-white p-5 dark:border-asphalt-700 dark:bg-asphalt-850 sm:p-6">
+      <h2 class="font-display text-sm text-slate-900 dark:text-white">🎫 {{ translate.t('progressPage.recent.title') }}</h2>
       @if (recentTests().length === 0) {
-        <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
-          Hali test tarixi yo'q. Bilet yoki random test yechganingizda shu yerda ko'rinadi.
-        </p>
+        <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">{{ translate.t('progressPage.recent.empty') }}</p>
       } @else {
-        <div class="mt-4 flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
+        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           @for (t of recentTests(); track t.id) {
-            <div class="flex items-center justify-between gap-3 py-3">
-              <div>
-                <p class="font-semibold text-slate-900 dark:text-white">{{ t.title }}</p>
+            <div class="relative flex items-stretch overflow-hidden rounded-xl border border-dashed border-slate-300 bg-slate-50 dark:border-asphalt-600 dark:bg-asphalt-900">
+              <div class="flex min-w-0 flex-1 flex-col justify-center px-4 py-3">
+                <p class="truncate font-semibold text-slate-900 dark:text-white">{{ t.title }}</p>
                 <p class="text-xs text-slate-500 dark:text-slate-400">{{ timeLabel(t.timestamp) }}</p>
+                <p class="mt-1 text-xs">
+                  <span class="text-emerald-500">✓ {{ t.correct }}</span>
+                  <span class="ml-3 text-red-500">✕ {{ t.wrong }}</span>
+                </p>
               </div>
-              <div class="flex items-center gap-4 text-sm">
-                <span class="text-status-good">✓ {{ t.correct }}</span>
-                <span class="text-status-critical">✕ {{ t.wrong }}</span>
-                <span class="w-14 text-right font-bold text-slate-900 dark:text-white">{{ t.total ? (t.correct / t.total * 100 | number: '1.0-0') : 0 }}%</span>
+              <!-- talonning yirtiladigan qismi -->
+              <div class="flex w-24 shrink-0 flex-col items-center justify-center border-l-2 border-dashed border-slate-300 px-2 dark:border-asphalt-600">
+                <span class="font-display text-lg text-slate-900 dark:text-white">{{ t.total ? (t.correct / t.total * 100 | number: '1.0-0') : 0 }}%</span>
+                <span
+                  class="mt-1 -rotate-6 rounded border-2 px-1.5 text-[10px] font-bold uppercase"
+                  [class]="passed(t) ? 'border-emerald-500 text-emerald-500' : 'border-red-500 text-red-500'"
+                >{{ passed(t) ? translate.t('progressPage.recent.passed') : translate.t('progressPage.recent.failed') }}</span>
               </div>
             </div>
           }
@@ -358,36 +471,42 @@
       }
     </section>
 
-    <!-- Achievements -->
-    <section class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-      @for (a of achievements(); track a.label) {
-        <div
-          class="rounded-2xl border p-4 text-center transition"
-          [class.border-slate-200]="!a.unlocked"
-          [class.dark:border-slate-800]="!a.unlocked"
-          [class.opacity-50]="!a.unlocked"
-          [class.border-brand-500/30]="a.unlocked"
-          [class.bg-brand-50]="a.unlocked"
-          [class.dark:bg-brand-500/10]="a.unlocked"
-        >
-          <div class="text-2xl">{{ a.icon }}</div>
-          <p class="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">{{ a.label }}</p>
-        </div>
-      }
+    <!-- Nishonlar -->
+    <section class="mt-4">
+      <h2 class="mb-3 font-display text-sm text-slate-900 dark:text-white">{{ translate.t('progressPage.badges.title') }}</h2>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        @for (a of achievements(); track a.icon) {
+          <div class="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-center dark:border-asphalt-700 dark:bg-asphalt-850" [class.opacity-45]="!a.unlocked">
+            <svg viewBox="0 0 64 64" class="h-14 w-14" aria-hidden="true">
+              @switch (a.icon) {
+                @case ('streak') { <circle cx="32" cy="32" r="28" [attr.fill]="a.unlocked ? '#f97316' : '#94a3b8'" stroke="#fff" stroke-width="3" /><text x="32" y="40" text-anchor="middle" font-size="22">🔥</text> }
+                @case ('tests') { <rect x="6" y="10" width="52" height="44" rx="6" [attr.fill]="a.unlocked ? '#2563eb' : '#94a3b8'" stroke="#fff" stroke-width="3" /><text x="32" y="40" text-anchor="middle" font-size="18" fill="#fff" class="font-display">50</text> }
+                @case ('score') { <circle cx="32" cy="32" r="28" fill="#fff" [attr.stroke]="a.unlocked ? '#e24b4a' : '#94a3b8'" stroke-width="7" /><text x="32" y="38" text-anchor="middle" font-size="16" fill="#1a1a1a" class="font-display">90</text> }
+                @case ('topics') { <rect x="13" y="13" width="38" height="38" [attr.fill]="a.unlocked ? '#f5c518' : '#94a3b8'" stroke="#fff" stroke-width="3" transform="rotate(45 32 32)" /><text x="32" y="38" text-anchor="middle" font-size="16" fill="#412402" class="font-display">5</text> }
+              }
+            </svg>
+            <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ a.label }}</p>
+          </div>
+        }
+      </div>
     </section>
 
-    <!-- Smart insight -->
+    <!-- Instruktor maslahati -->
     @if (insights().length > 0) {
-      <section class="mt-4 mb-10 rounded-2xl border border-brand-500/20 bg-brand-50 p-6 dark:border-brand-500/20 dark:bg-brand-500/10">
-        <h2 class="text-base font-bold text-slate-900 dark:text-white">💡 Sizning natijangiz</h2>
-        <ul class="mt-3 flex flex-col gap-1.5">
-          @for (line of insights(); track line) {
-            <li class="text-sm text-slate-700 dark:text-slate-300">• {{ line }}</li>
-          }
-        </ul>
+      <section class="mt-4 mb-6 flex gap-4 rounded-3xl border border-road-400/30 bg-road-400/10 p-5 sm:p-6">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-road-400 text-2xl" aria-hidden="true">👨‍🏫</div>
+        <div>
+          <h2 class="font-display text-sm text-slate-900 dark:text-white">{{ translate.t('progressPage.instructor.title') }}</h2>
+          <ul class="mt-2 flex flex-col gap-1.5">
+            @for (line of insights(); track line) {
+              <li class="text-sm text-slate-700 dark:text-slate-300">— {{ line }}</li>
+            }
+          </ul>
+        </div>
       </section>
     } @else {
-      <div class="mb-10"></div>
+      <div class="mb-6"></div>
     }
   }
+</div>
 </section>

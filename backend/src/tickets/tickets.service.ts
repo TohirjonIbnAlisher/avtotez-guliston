@@ -9,8 +9,10 @@ import { DEFAULT_LOCALE, Locale } from '../questions/locale';
 import { resolveQuestion } from '../questions/resolve-question';
 
 function sortQuestionsBySourceId(ticket: Ticket): Ticket {
+  const pos = new Map((ticket.questionOrder ?? []).map((id, i) => [id, i]));
   ticket.questions = [...ticket.questions].sort(
-    (a, b) => (a.sourceId ?? 0) - (b.sourceId ?? 0),
+    (a, b) =>
+      (pos.get(a.id) ?? Infinity) - (pos.get(b.id) ?? Infinity) || (a.sourceId ?? 0) - (b.sourceId ?? 0),
   );
   return ticket;
 }
@@ -43,6 +45,7 @@ export class TicketsService {
     const ticket = this.ticketsRepository.create({
       number: dto.number,
       questions,
+      questionOrder: dto.questionIds,
     });
     return this.ticketsRepository.save(ticket);
   }
@@ -78,7 +81,7 @@ export class TicketsService {
       ? await this.getQuestionsOrThrow(questionIds)
       : ticket.questions;
 
-    Object.assign(ticket, rest, { questions });
+    Object.assign(ticket, rest, { questions }, questionIds ? { questionOrder: questionIds } : {});
     return this.ticketsRepository.save(ticket);
   }
 

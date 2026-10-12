@@ -23,7 +23,8 @@
     "seed:admin": "ts-node -r tsconfig-paths/register src/database/create-admin.ts",
     "seed:topics": "ts-node -r tsconfig-paths/register src/database/reset-topics.ts",
     "seed:assign-topics": "ts-node -r tsconfig-paths/register src/database/assign-topics.ts",
-    "seed:custom-questions": "ts-node -r tsconfig-paths/register src/database/seed-custom-questions.ts"
+    "seed:custom-questions": "ts-node -r tsconfig-paths/register src/database/seed-custom-questions.ts",
+    "seed:tickets": "ts-node -r tsconfig-paths/register src/database/seed-tickets.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

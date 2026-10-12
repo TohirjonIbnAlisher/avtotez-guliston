@@ -11,6 +11,7 @@ export interface PublicUser {
   phone: string;
   fullName: string | null;
   role: User['role'];
+  avatarUrl: string | null;
   createdAt: Date;
 }
 
@@ -20,6 +21,7 @@ function toPublicUser(user: User): PublicUser {
     phone: user.phone,
     fullName: user.fullName,
     role: user.role,
+    avatarUrl: user.avatarUrl,
     createdAt: user.createdAt,
   };
 }
@@ -36,6 +38,10 @@ export class UsersService {
 
   findByPhone(phone: string): Promise<User | null> {
     return this.usersRepository.findOne({ where: { phone } });
+  }
+
+  save(user: User): Promise<User> {
+    return this.usersRepository.save(user);
   }
 
   findById(id: string): Promise<User | null> {

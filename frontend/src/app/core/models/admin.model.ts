@@ -29,6 +29,8 @@ export interface AdminQuestionPayload {
   options: Record<'uz' | 'uzk' | 'ru', string[]>;
   correctOptionIndex: number;
   imageUrl?: string | null;
+  /** Javob belgilangandan keyin rasm o'rnida ko'rsatiladigan video. */
+  videoUrl?: string | null;
   topicId?: string | null;
   /** Mavzu ichidagi o'rni; null — mavzu oxiriga. */
   topicOrder?: number | null;

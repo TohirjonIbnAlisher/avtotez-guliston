@@ -8,6 +8,10 @@ import { TopicsApiService } from '../../core/services/topics-api.service';
 import { TicketsApiService } from '../../core/services/tickets-api.service';
 import { TestHistoryService, TestSessionRecord } from '../../core/services/test-history.service';
 import { Topic, Ticket } from '../../core/models/question.model';
+import { TranslateService } from '../../core/services/translate.service';
+import { LanguageService } from '../../core/services/language.service';
+import { AuthService } from '../../core/services/auth.service';
+import { TestPreferencesService } from '../../core/services/test-preferences.service';
 
 type RangeKey = 'today' | '7d' | '30d' | 'all';
 
@@ -41,8 +45,23 @@ interface HeatmapCell {
   level: 0 | 1 | 2 | 3 | 4;
 }
 
+type SpotColor = 'green' | 'yellow' | 'red' | 'none';
+
+interface TicketSpot {
+  number: number;
+  color: SpotColor;
+}
+
+// Brauzerlarda o'zbekcha oy nomlari ko'pincha yo'q ("M10"), shuning uchun o'zimiz beramiz.
+const MONTHS = {
+  uz: ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'],
+  uzk: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],
+  ru: ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],
+} as const;
+/** Bilet o'tgan hisoblanadi — 90% va undan yuqori. */
+const PASS_RATIO = 0.9;
+
 const DAY_MS = 86_400_000;
-const DAILY_GOAL = 20;
 const HEATMAP_WEEKS = 12;
 
 function dateKey(d: Date): string {
@@ -70,6 +89,10 @@ export class ProgressPage {
   protected readonly testHistory = inject(TestHistoryService);
   private readonly topicsApi = inject(TopicsApiService);
   private readonly ticketsApi = inject(TicketsApiService);
+  protected readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
+  private readonly auth = inject(AuthService);
+  private readonly prefs = inject(TestPreferencesService);
 
   private readonly topics = signal<Topic[]>([]);
   private readonly tickets = signal<Ticket[]>([]);
@@ -317,11 +340,11 @@ export class ProgressPage {
     return this.progress.history().filter((e) => e.timestamp >= start).length;
   });
 
-  readonly goalTarget = DAILY_GOAL;
+  readonly goalTarget = this.prefs.dailyGoal;
   readonly goalPercent = computed(() =>
-    Math.min(100, Math.round((this.answeredToday() / DAILY_GOAL) * 100)),
+    Math.min(100, Math.round((this.answeredToday() / this.prefs.dailyGoal()) * 100)),
   );
-  readonly goalRemaining = computed(() => Math.max(0, DAILY_GOAL - this.answeredToday()));
+  readonly goalRemaining = computed(() => Math.max(0, this.prefs.dailyGoal() - this.answeredToday()));
 
   // ---------- Activity heatmap ----------
 
@@ -363,74 +386,110 @@ export class ProgressPage {
   // ---------- Achievements ----------
 
   readonly achievements = computed(() => [
-    {
-      icon: '🔥',
-      label: `${this.streak.streakDays()} kunlik streak`,
-      unlocked: this.streak.streakDays() >= 3,
-    },
-    {
-      icon: '🏆',
-      label: '50 ta test yakunlandi',
-      unlocked: this.testHistory.sessions().length >= 50,
-    },
-    {
-      icon: '🎯',
-      label: "90%+ umumiy natija",
-      unlocked: this.overallPercent() >= 90,
-    },
-    {
-      icon: '📚',
-      label: "5 ta mavzu 80%+ o'zlashtirildi",
-      unlocked: this.topicStats().filter((t) => t.percent >= 80).length >= 5,
-    },
+    { icon: 'streak', label: this.translate.t('progressPage.badges.streak'), unlocked: this.streak.streakDays() >= 3 },
+    { icon: 'tests', label: this.translate.t('progressPage.badges.tests'), unlocked: this.testHistory.sessions().length >= 50 },
+    { icon: 'score', label: this.translate.t('progressPage.badges.score'), unlocked: this.overallPercent() >= 90 },
+    { icon: 'topics', label: this.translate.t('progressPage.badges.topics'), unlocked: this.topicStats().filter((t) => t.percent >= 80).length >= 5 },
   ]);
 
-  // ---------- Insights ----------
+  // ---------- Insights ("instruktor maslahati") ----------
 
   readonly insights = computed(() => {
     const lines: string[] = [];
+    const t = (key: string, params?: Record<string, string | number>) => this.translate.t(`progressPage.instructor.${key}`, params);
+    const range = this.translate.t(`progressPage.rangeSentence.${this.range()}`);
     const delta = this.heroDelta();
     if (delta !== null && delta !== 0) {
-      lines.push(
-        `Oxirgi ${this.rangeLabel().toLowerCase()}da natijangiz ${delta > 0 ? "yaxshilandi" : "pasaydi"}: ${delta > 0 ? '+' : ''}${delta}%.`,
-      );
+      lines.push(delta > 0 ? t('improved', { range, delta }) : t('dropped', { range, delta }));
     }
     const strongest = this.strongTopics()[0];
     if (strongest) {
-      lines.push(`Eng kuchli mavzuingiz — ${strongest.name} (${strongest.percent}%).`);
+      lines.push(t('strongest', { name: strongest.name, percent: strongest.percent }));
     }
     const weakest = this.weakTopics()[0];
     if (weakest && weakest.percent < 70) {
-      lines.push(`Eng ko'p e'tibor talab qiladigan mavzu — ${weakest.name} (${weakest.percent}%).`);
+      lines.push(t('weakest', { name: weakest.name, percent: weakest.percent }));
     }
     if (this.goalRemaining() > 0) {
-      lines.push(`Bugungi maqsadga yetish uchun yana ${this.goalRemaining()} ta savol ishlang.`);
+      lines.push(t('goalLeft', { count: this.goalRemaining() }));
     } else if (this.answeredToday() > 0) {
-      lines.push("Bugungi maqsadingizga yetdingiz — ajoyib!");
+      lines.push(t('goalDone'));
     }
     return lines;
   });
 
+  readonly ranges: RangeKey[] = ['today', '7d', '30d', 'all'];
+
   rangeLabel(): string {
-    switch (this.range()) {
-      case 'today':
-        return 'Bugun';
-      case '7d':
-        return '7 kun';
-      case '30d':
-        return '30 kun';
-      case 'all':
-        return 'Barcha vaqt';
-    }
+    return this.translate.t(`progressPage.ranges.${this.range()}`);
   }
 
   dayLabel(date: Date): string {
-    return date.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' });
+    return `${date.getDate()} ${MONTHS[this.language.locale()][date.getMonth()]}`;
   }
 
   timeLabel(timestamp: number): string {
     const d = new Date(timestamp);
     return `${this.dayLabel(d)}, ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  }
+
+  // ---------- Haydovchilik guvohnomasi ----------
+
+  readonly driverName = computed(() => this.auth.currentUser()?.fullName || this.auth.currentUser()?.phone || '—');
+  readonly driverInitial = computed(() => this.driverName().charAt(0).toUpperCase());
+  /** Guvohnoma "raqami" — foydalanuvchi id'sidan qisqa ko'rinish. */
+  readonly licenseSerial = computed(() => {
+    const id = (this.auth.currentUser()?.id ?? '').replace(/-/g, '').toUpperCase();
+    return id ? `AG ${id.slice(0, 7)}` : 'AG 0000000';
+  });
+  readonly startedAt = computed(() => {
+    const history = this.progress.history();
+    if (!history.length) return '—';
+    const first = new Date(Math.min(...history.map((e) => e.timestamp)));
+    return `${String(first.getDate()).padStart(2, '0')}.${String(first.getMonth() + 1).padStart(2, '0')}.${first.getFullYear()}`;
+  });
+  readonly examReady = computed(() => this.overallPercent() >= 90);
+  /** Guvohnoma pastidagi "mashina o'qiydigan" qator: AG4783756<<ISM<<B<<<... */
+  readonly mrzLine = computed(() => {
+    const name = this.driverName().toUpperCase().replace(/\s+/g, '<');
+    return `${this.licenseSerial().replace(/\s/g, '')}<<${name}<<B<<${'<'.repeat(30)}`.slice(0, 44);
+  });
+  readonly todayLabel = computed(() => {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
+  });
+
+  /** Odometr ko'rinishi uchun raqamni 4 xonali katakchalarga bo'lish. */
+  odometerDigits(value: number | null, suffix = ''): string[] {
+    if (value === null) return ['—'];
+    return (String(value).padStart(4, '0') + suffix).split('');
+  }
+
+  // ---------- Svetofor ----------
+
+  /** Chiroq yorqinligi — ulushiga qarab (0.25…1). */
+  lampOpacity(percent: number): number {
+    return percent > 0 ? 0.35 + Math.min(1, percent / 60) * 0.65 : 0.12;
+  }
+
+  // ---------- Yoqilg'i datchigi (bugungi maqsad) ----------
+
+  /** Strelka: E (-60°) dan F (+60°) gacha. */
+  readonly fuelAngle = computed(() => -60 + (this.goalPercent() / 100) * 120);
+
+  // ---------- Biletlar parkovkasi ----------
+
+  readonly ticketSpots = computed<TicketSpot[]>(() => {
+    const stats = this.progress.ticketStats();
+    return this.tickets().map((ticket) => {
+      const stat = stats[ticket.number];
+      const color: SpotColor = !stat ? 'none' : stat.wrong <= 1 ? 'green' : stat.wrong === 2 ? 'yellow' : 'red';
+      return { number: ticket.number, color };
+    });
+  });
+
+  passed(t: TestSessionRecord): boolean {
+    return t.total > 0 && t.correct >= Math.ceil(t.total * PASS_RATIO);
   }
 
   // ---------- Line chart geometry ----------

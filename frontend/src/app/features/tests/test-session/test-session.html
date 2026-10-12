@@ -1,4 +1,4 @@
-@if (!sessionEnded()) {
+@if (!sessionEnded() || finishButton()) {
   <div class="animate-fade-in-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
     <div class="flex flex-wrap items-center justify-between gap-3">
       @if (title()) {
@@ -55,6 +55,25 @@
         <span class="flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
           🕐 {{ timeDisplay() }}
         </span>
+        @if (finishButton()) {
+          @if (!sessionEnded()) {
+            <button
+              type="button"
+              class="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-bold text-white transition hover:bg-emerald-500"
+              (click)="finishNow()"
+            >
+              {{ translate.t('testRunner.finishBtn') }}
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="rounded-lg border-2 border-emerald-600 px-4 py-1.5 text-sm font-bold text-emerald-600 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
+              (click)="resultsOpen.set(true)"
+            >
+              {{ translate.t('testRunner.results') }}
+            </button>
+          }
+        }
       </div>
     </div>
 
@@ -76,12 +95,34 @@
         <h3 class="text-xl font-bold text-slate-900 lg:col-start-1 dark:text-white">{{ question.text }}</h3>
 
         <div class="lg:col-start-2 lg:row-span-3 lg:row-start-1">
-          <img
-            class="w-full cursor-zoom-in rounded-2xl lg:sticky lg:top-24"
-            [src]="imageOf(question)"
-            alt=""
-            (click)="openImage()"
-          />
+          @if (isAnswered() && question.videoUrl) {
+            <!-- Javob belgilangandan keyin — izoh-video (harakat tartibi) avtomatik boshlanadi -->
+            <div class="relative lg:sticky lg:top-24">
+              <video
+                #explainVideo
+                class="w-full rounded-2xl bg-black"
+                [src]="question.videoUrl"
+                [poster]="imageOf(question)"
+                autoplay
+                muted
+                playsinline
+              ></video>
+              <button
+                type="button"
+                class="absolute bottom-3 right-3 rounded-lg bg-slate-900/75 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-slate-900"
+                (click)="replayVideo(explainVideo)"
+              >
+                ↻ {{ translate.t('testRunner.replayVideo') }}
+              </button>
+            </div>
+          } @else {
+            <img
+              class="w-full cursor-zoom-in rounded-2xl lg:sticky lg:top-24"
+              [src]="imageOf(question)"
+              alt=""
+              (click)="openImage()"
+            />
+          }
         </div>
 
         <ul class="flex flex-col gap-2.5 lg:col-start-1">
@@ -257,5 +298,94 @@
     <button type="button" class="btn-primary mt-6 w-full" (click)="restart()">
       {{ translate.t('testRunner.restartBtn') }}
     </button>
+  </div>
+}
+
+@if (resultsOpen()) {
+  <div class="fixed inset-0 z-100 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4" (click)="resultsOpen.set(false)">
+    <div
+      class="animate-fade-in-up w-full max-w-lg rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl dark:bg-slate-900"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="translate.t('testRunner.results')"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+      <h2 class="text-center text-xl font-extrabold text-slate-900 dark:text-white">{{ translate.t('testRunner.results') }}</h2>
+
+      <div class="relative mx-auto mt-4 h-36 w-36">
+        <svg viewBox="0 0 120 120" class="h-full w-full -rotate-90">
+          <circle cx="60" cy="60" r="52" fill="none" stroke-width="10" class="stroke-slate-200 dark:stroke-slate-700" />
+          <circle
+            cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round"
+            [class.stroke-emerald-500]="passed()"
+            [class.stroke-red-500]="!passed()"
+            stroke-dasharray="326.73"
+            [attr.stroke-dashoffset]="326.73 * (1 - correctPercent() / 100)"
+          />
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="text-3xl font-extrabold" [class.text-emerald-500]="passed()" [class.text-red-500]="!passed()">{{ correctPercent() }}%</span>
+          <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">
+            {{ passed() ? translate.t('testRunner.passedShort') : translate.t('testRunner.failedShort') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="mt-5 grid grid-cols-3 gap-3">
+        <div class="rounded-2xl border border-emerald-500/40 bg-emerald-50 p-3 text-center dark:bg-emerald-500/10">
+          <div class="text-emerald-500">✓</div>
+          <div class="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">{{ correctCount() }}</div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ translate.t('testRunner.correctCountLabel') }}</div>
+        </div>
+        <div class="rounded-2xl border border-red-500/40 bg-red-50 p-3 text-center dark:bg-red-500/10">
+          <div class="text-red-500">✕</div>
+          <div class="text-xl font-extrabold text-red-600 dark:text-red-400">{{ answeredWrongCount() }}</div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ translate.t('testRunner.wrongCountLabel') }}</div>
+        </div>
+        <div class="rounded-2xl border border-slate-300 bg-slate-50 p-3 text-center dark:border-slate-600 dark:bg-slate-800">
+          <div class="text-slate-400">—</div>
+          <div class="text-xl font-extrabold text-slate-700 dark:text-slate-200">{{ unansweredCount() }}</div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ translate.t('testRunner.unanswered') }}</div>
+        </div>
+      </div>
+
+      <h3 class="mt-5 text-sm font-bold text-slate-700 dark:text-slate-300">{{ translate.t('testRunner.questionsLabel') }}</h3>
+      <div class="mt-2 flex max-h-32 flex-wrap gap-2 overflow-y-auto">
+        @for (q of questions(); track q.id; let i = $index) {
+          <button
+            type="button"
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition hover:opacity-80"
+            [class.bg-emerald-500]="questionResult(q) === 'correct'"
+            [class.bg-red-500]="questionResult(q) === 'wrong'"
+            [class.text-white]="questionResult(q) !== 'none'"
+            [class.bg-slate-200]="questionResult(q) === 'none'"
+            [class.text-slate-600]="questionResult(q) === 'none'"
+            [class.dark:bg-slate-700]="questionResult(q) === 'none'"
+            [class.dark:text-slate-300]="questionResult(q) === 'none'"
+            (click)="reviewQuestion(i)"
+          >
+            {{ i + 1 }}
+          </button>
+        }
+      </div>
+
+      <div class="mt-6 grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          class="rounded-2xl bg-slate-200 py-3 text-base font-bold text-slate-700 transition hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
+          (click)="restart()"
+        >
+          ↻ {{ translate.t('testRunner.retry') }}
+        </button>
+        <button
+          type="button"
+          class="rounded-2xl bg-emerald-500 py-3 text-base font-bold text-white transition hover:bg-emerald-400"
+          (click)="exit()"
+        >
+          {{ translate.t('testRunner.finishBtn') }}
+        </button>
+      </div>
+    </div>
   </div>
 }

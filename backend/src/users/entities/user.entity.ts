@@ -20,6 +20,10 @@ export class User {
   @Column({ name: 'full_name', type: 'varchar', nullable: true })
   fullName: string | null;
 
+  /** Profil rasmi (/media/avatars/...). */
+  @Column({ name: 'avatar_url', type: 'varchar', nullable: true })
+  avatarUrl: string | null;
+
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
 

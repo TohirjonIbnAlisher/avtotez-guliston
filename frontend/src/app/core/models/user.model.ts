@@ -5,4 +5,8 @@ export interface AuthUser {
   phone: string;
   fullName: string | null;
   role: UserRole;
+  /** Profil rasmi (backend'dagi nisbiy manzil, /media/avatars/...). */
+  avatarUrl?: string | null;
+  /** Ro'yxatdan o'tgan sana (ISO). */
+  createdAt?: string;
 }

@@ -1,4 +1,6 @@
-@if (!isDashboardRoute()) {
+@if (useAppHeader()) {
+  <app-header />
+} @else {
   <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
     <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
       <a
@@ -7,8 +9,7 @@
         (click)="closeMobileMenu()"
         class="flex items-center gap-2.5"
       >
-        <app-logo-mark />
-        <span class="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">{{ translate.t('common.brand') }}</span>
+        <app-logo-mark [withText]="true" />
       </a>
 
       <nav class="hidden items-center gap-1 lg:flex">
@@ -56,6 +57,7 @@
 
         @if (auth.isAuthenticated()) {
           <a routerLink="/dashboard" class="btn-dark px-5 py-2.5 text-base">{{ translate.t('common.cabinet') }}</a>
+          <app-profile-menu />
         } @else {
           <a routerLink="/login" class="btn-dark px-5 py-2.5 text-base">{{ translate.t('common.login') }}</a>
         }
