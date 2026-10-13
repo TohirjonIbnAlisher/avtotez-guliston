@@ -27,7 +27,8 @@ function resolveTicket(ticket: Ticket, lang: Locale): ResolvedTicket {
   return {
     id: ticket.id,
     number: ticket.number,
-    questions: ticket.questions.map((question) => resolveQuestion(question, lang)),
+    // nofaol savollar biletda ko'rsatilmaydi
+    questions: ticket.questions.filter((q) => q.isActive).map((question) => resolveQuestion(question, lang)),
   };
 }
 
@@ -55,17 +56,20 @@ export class TicketsService {
       relations: { questions: true },
       order: { number: 'ASC' },
     });
-    return tickets.map((ticket) => resolveTicket(sortQuestionsBySourceId(ticket), lang));
+    return tickets
+      .filter((ticket) => ticket.questions.some((q) => q.isActive))
+      .map((ticket) => resolveTicket(sortQuestionsBySourceId(ticket), lang));
   }
 
   async summary(): Promise<{ id: string; number: number; questionCount: number }[]> {
     const rows: { id: string; number: number; question_count: string }[] = await this.ticketsRepository
       .createQueryBuilder('t')
-      .leftJoin('t.questions', 'q')
+      .leftJoin('t.questions', 'q', 'q.isActive = true')
       .select('t.id', 'id')
       .addSelect('t.number', 'number')
       .addSelect('COUNT(q.id)', 'question_count')
       .groupBy('t.id')
+      .having('COUNT(q.id) > 0') // faol savoli qolmagan biletlar ro'yxatda ko'rinmaydi
       .orderBy('t.number', 'ASC')
       .getRawMany();
     return rows.map((r) => ({ id: r.id, number: Number(r.number), questionCount: Number(r.question_count) }));
@@ -73,7 +77,7 @@ export class TicketsService {
 
   async findByNumber(number: number, lang: Locale = DEFAULT_LOCALE): Promise<ResolvedTicket> {
     const ticket = await this.ticketsRepository.findOne({ where: { number }, relations: { questions: true } });
-    if (!ticket) {
+    if (!ticket || !ticket.questions.some((q) => q.isActive)) {
       throw new NotFoundException(`Bilet topilmadi: ${number}`);
     }
     return resolveTicket(sortQuestionsBySourceId(ticket), lang);

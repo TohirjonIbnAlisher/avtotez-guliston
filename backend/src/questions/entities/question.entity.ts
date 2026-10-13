@@ -48,6 +48,10 @@ export class Question {
   @Column({ name: 'is_number_related', default: false })
   isNumberRelated: boolean;
 
+  // Nofaol savollar bazada qoladi, lekin hech qayerda (mavzular, biletlar, testlar, admin ro'yxati) ko'rsatilmaydi.
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
+
   // Mavzu ichidagi tartib raqami (1 dan boshlab, bo'shliqsiz). Mavzusiz savollarda null.
   @Column({ name: 'topic_order', type: 'int', nullable: true })
   topicOrder: number | null;

@@ -12,6 +12,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/database/release-seed && node dist/main",
+    "questions:keep-one-per-topic": "ts-node -r tsconfig-paths/register src/database/keep-one-per-topic.ts",
     "seed:release": "ts-node -r tsconfig-paths/register src/database/release-seed.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",

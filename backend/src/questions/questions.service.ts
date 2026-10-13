@@ -60,6 +60,7 @@ export class QuestionsService {
   ): Promise<ResolvedQuestion[]> {
     const questions = await this.questionsRepository.find({
       where: {
+        isActive: true,
         ...(options.topicId && { topic: { id: options.topicId } }),
         ...(options.isTricky !== undefined && { isTricky: options.isTricky }),
         ...(options.isNumberRelated !== undefined && {
@@ -79,6 +80,7 @@ export class QuestionsService {
   ): Promise<ResolvedQuestion[]> {
     const questions = await this.questionsRepository
       .createQueryBuilder('question')
+      .where('question.isActive = true')
       .orderBy('RANDOM()')
       .limit(count)
       .getMany();
