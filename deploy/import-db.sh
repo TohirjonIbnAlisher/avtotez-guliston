@@ -10,6 +10,24 @@ read -rsp "Eski baza manzili (DATABASE_URL, postgres://...): " SRC
 echo
 [ -n "$SRC" ] || { echo "Manzil kiritilmadi."; exit 1; }
 
+# Nusxalashda qo'shilib qolishi mumkin bo'lgan narsalarni tozalash: bo'sh joylar, qo'shtirnoqlar,
+# "DATABASE_URL=" yoki "psql " prefiksi. channel_binding parametri olib tashlanadi (sslmode=require qoladi).
+CR=$(printf '\r')
+SRC=${SRC//$CR/}
+SRC=$(printf '%s' "$SRC" | sed -E \
+  -e 's/^[[:space:]]+//' \
+  -e 's/[[:space:]]+$//' \
+  -e 's/^psql[[:space:]]+//' \
+  -e 's/^DATABASE_URL=//' \
+  -e "s/^[\"']+//" \
+  -e "s/[\"']+$//" \
+  -e 's/([?&])channel_binding=[^&]*&?/\1/' \
+  -e 's/[?&]$//')
+case "$SRC" in
+  postgres://*|postgresql://*) ;;
+  *) echo "Manzil postgres:// yoki postgresql:// bilan boshlanishi kerak."; exit 1 ;;
+esac
+
 # pg_dump versiyasi manba serverdan past bo'lmasligi kerak — manba versiyasini aniqlaymiz
 MAJOR=$(docker run --rm -e SRC="$SRC" postgres:18-alpine sh -c 'psql "$SRC" -Atc "show server_version_num"' | cut -c1-2)
 echo "Manba PostgreSQL versiyasi: $MAJOR"
@@ -22,13 +40,13 @@ docker compose exec -T db psql -U avtotez -d avtotez -q -c "DROP SCHEMA public C
 
 echo "==> Ko'chirilmoqda..."
 # yangi pg_dump versiyalari qo'shadigan, eski serverda yo'q sozlama satrlari olib tashlanadi
-docker run --rm -e SRC="$SRC" "postgres:${MAJOR}-alpine" pg_dump --no-owner --no-acl "$SRC" \
+docker run --rm -e SRC="$SRC" "postgres:${MAJOR}-alpine" sh -c 'pg_dump --no-owner --no-acl "$SRC"' \
   | sed -e '/^SET transaction_timeout/d' \
   | docker compose exec -T db psql -U avtotez -d avtotez -q -v ON_ERROR_STOP=1 >/dev/null
 
 docker compose exec -T db psql -U avtotez -d avtotez -Atc \
   "select 'savollar: ' || (select count(*) from questions) || ', foydalanuvchilar: ' || (select count(*) from users) || ', biletlar: ' || (select count(*) from tickets)"
 
-echo "==> API ishga tushiriladi"
+echo "==> API va sayt ishga tushiriladi"
 docker compose up -d
 echo "Tayyor."
