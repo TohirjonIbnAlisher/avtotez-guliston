@@ -1,0 +1,24 @@
+# Caddy HTTPS sertifikatlarni (Let's Encrypt) o'zi oladi va yangilab turadi.
+
+avtotez.uz {
+	encode zstd gzip
+	root * /srv/web
+
+	# Angular build fayllari nomida xesh bor — uzoq keshlash mumkin; index.html esa doim yangisi
+	@hashed path_regexp \.[0-9a-zA-Z]{8,}\.(js|css)$
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+	header /index.html Cache-Control "no-cache"
+
+	# SPA: mavjud bo'lmagan yo'llar index.html ga (Angular router hal qiladi)
+	try_files {path} /index.html
+	file_server
+}
+
+www.avtotez.uz {
+	redir https://avtotez.uz{uri} permanent
+}
+
+api.avtotez.uz {
+	encode zstd gzip
+	reverse_proxy api:3000
+}

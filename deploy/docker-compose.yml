@@ -1,0 +1,62 @@
+# avtotez.uz — production stack (serverda: /opt/avtotez/app/deploy).
+#
+#   db   — PostgreSQL (faqat ichki tarmoqda, port tashqariga ochilmaydi)
+#   api  — NestJS backend (api.avtotez.uz)
+#   web  — Caddy: frontend statik fayllari (avtotez.uz) + api uchun reverse proxy + avtomatik HTTPS
+#
+# Maxfiy qiymatlar deploy/.env faylida (git'ga kirmaydi), namuna: .env.example
+name: avtotez
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: avtotez
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env da berilishi kerak}
+      POSTGRES_DB: avtotez
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U avtotez -d avtotez"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build: ../backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://avtotez:${POSTGRES_PASSWORD}@db:5432/avtotez
+      DB_SSL: "false"
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET .env da berilishi kerak}
+    volumes:
+      - ../data:/app/data:ro
+      # rasmlar, videolar va foydalanuvchi avatarlari — serverning diskida doimiy saqlanadi
+      - ../backend/public:/app/backend/public
+
+  web:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../frontend/dist/frontend/browser:/srv/web:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
