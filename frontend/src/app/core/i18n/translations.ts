@@ -473,6 +473,7 @@ const uz = {
     errorInvalid: "Telefon raqam yoki parol noto'g'ri.",
     sessionIdle: 'Uzoq vaqt faolsizlik sababli tizimdan chiqdingiz. Qayta kiring.',
     sessionExpired: 'Sessiya muddati tugadi. Qayta kiring.',
+    sessionReplaced: "Hisobingizga boshqa qurilmadan kirildi. Bitta hisobdan bir vaqtda faqat bitta qurilmada foydalanish mumkin.",
   },
   testRunner: {
     idleTitle: 'Imtihon simulyatsiyasi',
@@ -1015,6 +1016,7 @@ const uzk: TranslationTree = {
     errorInvalid: 'Телефон рақам ёки парол нотўғри.',
     sessionIdle: 'Узоқ вақт фаолсизлик сабабли тизимдан чиқдингиз. Қайта киринг.',
     sessionExpired: 'Сессия муддати тугади. Қайта киринг.',
+    sessionReplaced: 'Ҳисобингизга бошқа қурилмадан кирилди. Битта ҳисобдан бир вақтда фақат битта қурилмада фойдаланиш мумкин.',
   },
   testRunner: {
     idleTitle: 'Имтиҳон симуляцияси',
@@ -1551,6 +1553,7 @@ const ru: TranslationTree = {
     errorInvalid: 'Неверный номер телефона или пароль.',
     sessionIdle: 'Вы вышли из системы из-за длительного бездействия. Войдите снова.',
     sessionExpired: 'Сессия истекла. Войдите снова.',
+    sessionReplaced: 'В ваш аккаунт вошли с другого устройства. Одним аккаунтом можно пользоваться только на одном устройстве одновременно.',
   },
   testRunner: {
     idleTitle: 'Симуляция экзамена',

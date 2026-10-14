@@ -30,6 +30,10 @@ export class RefreshToken {
   @Column({ name: 'revoked_at', type: 'timestamptz', nullable: true })
   revokedAt: Date | null;
 
+  /** Nima uchun bekor qilingan: 'replaced' — shu hisobga boshqa qurilmadan kirildi. */
+  @Column({ name: 'revoked_reason', type: 'varchar', length: 20, nullable: true })
+  revokedReason: string | null;
+
   @Column({ name: 'replaced_by_id', type: 'uuid', nullable: true })
   replacedById: string | null;
 

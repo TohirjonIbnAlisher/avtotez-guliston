@@ -24,7 +24,7 @@ interface AuthTokensResponse {
   user: AuthUser;
 }
 
-export type LogoutReason = 'idle' | 'expired';
+export type LogoutReason = 'idle' | 'expired' | 'replaced';
 
 function storage(): Storage | null {
   return typeof localStorage === 'undefined' ? null : localStorage;
@@ -86,19 +86,33 @@ export class AuthService {
   }
 
   /** Serverdagi sessiyani bekor qilib, shu qurilmadan chiqish. */
-  logout(): void {
+  logout(reason: LogoutReason | null = null): void {
     const refreshToken = storage()?.getItem(REFRESH_KEY);
     if (refreshToken) {
       this.http.post(`${this.baseUrl}/logout`, { refreshToken }).subscribe({ error: () => undefined });
     }
-    this.clear();
+    this.clear(reason);
   }
 
+  /** Oxirgi avtomatik chiqish sababi — login sahifasida tegishli xabar ko'rsatish uchun. */
+  lastEndReason: LogoutReason | null = null;
+
   /** Faqat lokal ma'lumotni tozalash (sessiya serverda allaqachon tugagan bo'lsa). */
-  clear(): void {
+  clear(reason: LogoutReason | null = null): void {
+    this.lastEndReason = reason;
     const ls = storage();
     AUTH_KEYS.forEach((k) => ls?.removeItem(k));
     this.userSignal.set(null);
+  }
+
+  /** Sessiya nima uchun tugadi: shu hisobga boshqa qurilmadan kirilgan bo'lsa — 'replaced'. */
+  sessionEndReason(error: unknown): LogoutReason {
+    return error instanceof HttpErrorResponse && error.error?.code === 'SESSION_REPLACED' ? 'replaced' : 'expired';
+  }
+
+  /** Sessiya hali faolmi — serverga yengil so'rov (401 bo'lsa interceptor chiqarib yuboradi). */
+  verifySession(): Observable<unknown> {
+    return this.http.get(`${this.baseUrl}/me`);
   }
 
   /** Sessiya serverda tugaganmi (aks holda — masalan, internet uzilishi — sessiya saqlanadi). */

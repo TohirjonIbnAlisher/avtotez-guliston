@@ -3,8 +3,8 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Injectable()
 export class SuperAdminGuard extends JwtAuthGuard {
-  override canActivate(context: ExecutionContext): boolean {
-    super.canActivate(context);
+  override async canActivate(context: ExecutionContext): Promise<boolean> {
+    await super.canActivate(context);
 
     const request = context.switchToHttp().getRequest();
     if (request.user?.role !== 'superadmin') {

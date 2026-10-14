@@ -21,12 +21,13 @@ export class Login {
   readonly showPassword = signal(false);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
-  /** Avtomatik chiqish sababi (?reason=idle|expired). */
+  /** Avtomatik chiqish sababi (?reason=idle|expired|replaced). */
   readonly notice = signal<string | null>(this.reasonNotice(this.route.snapshot.queryParamMap.get('reason')));
 
   private reasonNotice(reason: string | null): string | null {
     if (reason === 'idle') return this.translate.t('login.sessionIdle');
     if (reason === 'expired') return this.translate.t('login.sessionExpired');
+    if (reason === 'replaced') return this.translate.t('login.sessionReplaced');
     return null;
   }
 

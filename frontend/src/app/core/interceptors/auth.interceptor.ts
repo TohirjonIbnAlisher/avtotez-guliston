@@ -20,8 +20,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // Sessiyani tiklab bo'lmadi (refresh token muddati o'tgan / bekor qilingan) — qayta login.
   const endSession = (error: unknown) => {
     if (auth.isSessionError(error) && auth.isAuthenticated()) {
-      auth.clear();
-      router.navigate(['/login'], { queryParams: { reason: 'expired' } });
+      const reason = auth.sessionEndReason(error);
+      auth.clear(reason);
+      router.navigate(['/login'], { queryParams: { reason } });
     }
     return throwError(() => error);
   };

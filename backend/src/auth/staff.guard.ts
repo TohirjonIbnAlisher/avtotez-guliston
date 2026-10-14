@@ -5,8 +5,8 @@ const STAFF_ROLES = ['admin', 'superadmin'];
 
 @Injectable()
 export class StaffGuard extends JwtAuthGuard {
-  override canActivate(context: ExecutionContext): boolean {
-    super.canActivate(context);
+  override async canActivate(context: ExecutionContext): Promise<boolean> {
+    await super.canActivate(context);
 
     const request = context.switchToHttp().getRequest();
     if (!STAFF_ROLES.includes(request.user?.role)) {

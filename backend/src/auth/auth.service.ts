@@ -76,13 +76,19 @@ export class AuthService {
     }
     await this.cleanup(user.id);
     const now = Date.now();
+    const familyId = randomUUID();
     const refresh = await this.createRefreshToken(
       user.id,
-      randomUUID(),
+      familyId,
       new Date(now + this.settings.refreshTtlSeconds * 1000),
       userAgent,
     );
-    return this.buildTokens(user, refresh.raw);
+    // Bitta qurilma qoidasi: shu hisobdagi boshqa barcha sessiyalar yopiladi — oxirgi kirgan qoladi.
+    await this.tokensRepo.update(
+      { userId: user.id, revokedAt: IsNull(), familyId: Not(familyId) },
+      { revokedAt: new Date(now), revokedReason: 'replaced' },
+    );
+    return this.buildTokens(user, refresh.raw, familyId);
   }
 
   async refresh(rawToken: string, userAgent?: string): Promise<AuthTokens> {
@@ -92,6 +98,9 @@ export class AuthService {
     }
 
     const now = Date.now();
+    if (token.revokedAt && token.revokedReason === 'replaced') {
+      throw sessionError('SESSION_REPLACED', "Hisobingizga boshqa qurilmadan kirildi.");
+    }
     if (token.revokedAt) {
       if (token.replacedById && now - token.revokedAt.getTime() < ROTATION_GRACE_MS) {
         throw sessionError('TOKEN_ROTATED', 'Token boshqa tabda yangilandi.');
@@ -124,7 +133,7 @@ export class AuthService {
       await this.tokensRepo.delete({ id: next.entity.id });
       throw sessionError('TOKEN_ROTATED', 'Token boshqa tabda yangilandi.');
     }
-    return this.buildTokens(user, next.raw);
+    return this.buildTokens(user, next.raw, token.familyId);
   }
 
   async logout(rawToken: string): Promise<void> {
@@ -190,8 +199,9 @@ export class AuthService {
     return user;
   }
 
-  private buildTokens(user: User, refreshToken: string): AuthTokens {
-    const payload: JwtPayload = { sub: user.id, role: user.role, typ: 'access' };
+  private buildTokens(user: User, refreshToken: string, familyId: string): AuthTokens {
+    // sid — sessiya (refresh token oilasi); JwtAuthGuard u hali faolligini tekshiradi
+    const payload: JwtPayload = { sub: user.id, role: user.role, typ: 'access', sid: familyId };
     return {
       accessToken: this.jwtService.sign(payload, { expiresIn: this.settings.accessTtlSeconds }),
       accessTokenExpiresAt: Date.now() + this.settings.accessTtlSeconds * 1000,

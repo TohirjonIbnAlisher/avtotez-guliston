@@ -6,7 +6,9 @@ const ACTIVITY_EVENTS = ['mousedown', 'mousemove', 'keydown', 'wheel', 'scroll',
 /** Faollik localStorage'ga ko'pi bilan shuncha vaqtda bir yoziladi. */
 const ACTIVITY_WRITE_THROTTLE_MS = 5_000;
 const CHECK_INTERVAL_MS = 10_000;
-const PROTECTED_PREFIXES = ['/dashboard', '/progress', '/admin'];
+/** Bitta qurilma qoidasi: boshqa qurilmadan kirilganini sezish uchun sessiya shuncha vaqtda bir tekshiriladi. */
+const VERIFY_INTERVAL_MS = 30_000;
+const PROTECTED_PREFIXES = ['/dashboard', '/progress', '/profile', '/admin'];
 
 /**
  * Faolsizlik bo'yicha avtomatik chiqish va faol foydalanuvchi uchun access token'ni oldindan yangilash.
@@ -17,6 +19,7 @@ export class SessionService {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private lastWrite = 0;
+  private lastVerify = 0;
 
   constructor() {
     if (typeof window === 'undefined') {
@@ -27,7 +30,9 @@ export class SessionService {
     effect(() => {
       const now = this.auth.isAuthenticated();
       if (wasAuthenticated && !now && PROTECTED_PREFIXES.some((p) => this.router.url.startsWith(p))) {
-        this.router.navigate(['/login']);
+        // sessiya avtomatik tugagan bo'lsa (masalan, boshqa qurilmadan kirildi) — sababi ham ko'rsatiladi
+        const reason = this.auth.lastEndReason;
+        this.router.navigate(['/login'], reason ? { queryParams: { reason } } : {});
       }
       wasAuthenticated = now;
     });
@@ -64,16 +69,23 @@ export class SessionService {
     }
     const idleFor = Date.now() - this.lastActivity();
     if (idleFor > this.auth.idleTimeoutMs) {
-      this.auth.logout();
+      this.auth.logout('idle');
       this.router.navigate(['/login'], { queryParams: { reason: 'idle' } });
       return;
+    }
+    // Ko'rinib turgan tabda vaqti-vaqti bilan sessiya tekshiriladi: boshqa qurilmadan kirilgan bo'lsa,
+    // so'rov 401 qaytaradi va interceptor login sahifasiga ("boshqa qurilmadan kirildi") olib o'tadi.
+    if (document.visibilityState === 'visible' && Date.now() - this.lastVerify > VERIFY_INTERVAL_MS) {
+      this.lastVerify = Date.now();
+      this.auth.verifySession().subscribe({ error: () => undefined });
     }
     // Faol foydalanuvchi so'rov yubormasa ham sessiya serverda "eskirmasligi" uchun.
     if (this.auth.accessExpiresSoon()) {
       this.auth.refreshAccessToken(this.auth.token).catch((error) => {
         if (this.auth.isSessionError(error) && this.auth.isAuthenticated()) {
-          this.auth.clear();
-          this.router.navigate(['/login'], { queryParams: { reason: 'expired' } });
+          const reason = this.auth.sessionEndReason(error);
+          this.auth.clear(reason);
+          this.router.navigate(['/login'], { queryParams: { reason } });
         }
       });
     }
