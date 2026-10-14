@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Injectable, inject, signal } from '@angular/core';
+import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { withAbsoluteMedia } from '../utils/media-url';
 import { Question } from '../models/question.model';
@@ -12,6 +12,13 @@ export class QuestionsApiService {
   private readonly http = inject(HttpClient);
   private readonly languageService = inject(LanguageService);
   private readonly baseUrl = `${environment.apiUrl}/questions`;
+
+  private readonly versionSignal = signal(0);
+  /** Savollar o'zgargan sari (admin panelda yaratish/tahrirlash/o'chirish/tartib) oshadi — QuestionsStore qayta yuklanadi. */
+  readonly version = this.versionSignal.asReadonly();
+  private bump<T>() {
+    return tap<T>({ next: () => this.versionSignal.update((v) => v + 1) });
+  }
 
   findAll(topicId?: string): Observable<Question[]> {
     const params: Record<string, string> = { lang: this.languageService.locale() };
@@ -38,20 +45,20 @@ export class QuestionsApiService {
   }
 
   create(payload: AdminQuestionPayload): Observable<unknown> {
-    return this.http.post(this.baseUrl, payload);
+    return this.http.post(this.baseUrl, payload).pipe(this.bump());
   }
 
   update(id: string, payload: Partial<AdminQuestionPayload>): Observable<unknown> {
-    return this.http.patch(`${this.baseUrl}/${id}`, payload);
+    return this.http.patch(`${this.baseUrl}/${id}`, payload).pipe(this.bump());
   }
 
   /** Mavzudagi savollar tartibini saqlash — `questionIds` yangi tartibda, mavzudagi barcha savollar. */
   reorder(topicId: string, questionIds: string[]): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/order`, { topicId, questionIds });
+    return this.http.put<void>(`${this.baseUrl}/order`, { topicId, questionIds }).pipe(this.bump());
   }
 
   remove(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(this.bump());
   }
 
   uploadVideo(file: File): Observable<{ videoUrl: string }> {

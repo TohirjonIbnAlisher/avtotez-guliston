@@ -17,8 +17,10 @@ export class QuestionsStore {
   private readonly byIdMap = computed(() => new Map(this._questions().map((q) => [q.id, q])));
 
   constructor() {
+    // til almashganda va admin panelda savollar o'zgarganda qayta yuklanadi
     effect(() => {
       this.languageService.locale();
+      this.api.version();
       this._loading.set(true);
       this.api.findAll().subscribe({
         next: (questions) => {
