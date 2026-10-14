@@ -5,6 +5,7 @@ import { User } from '../../users/entities/user.entity';
 // (rotatsiya); bitta login'dan chiqqan tokenlar zanjiri `familyId` bilan bog'langan.
 @Entity('refresh_tokens')
 @Index('IDX_refresh_tokens_user', ['userId'])
+@Index('IDX_refresh_tokens_family', ['familyId'])
 export class RefreshToken {
   @PrimaryGeneratedColumn('uuid')
   id: string;
