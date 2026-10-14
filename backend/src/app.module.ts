@@ -17,6 +17,7 @@ import { CreateUserProgress1760000000000 } from './migrations/1760000000000-Crea
 import { AddQuestionTopicOrder1760100000000 } from './migrations/1760100000000-AddQuestionTopicOrder';
 import { CreateRefreshTokens1760200000000 } from './migrations/1760200000000-CreateRefreshTokens';
 import { AddRefreshTokenRevokedReason1760800000000 } from './migrations/1760800000000-AddRefreshTokenRevokedReason';
+import { AddTopicTranslations1760900000000 } from './migrations/1760900000000-AddTopicTranslations';
 import { AddQuestionIsActive1760700000000 } from './migrations/1760700000000-AddQuestionIsActive';
 import { AddTopicCategory1760600000000 } from './migrations/1760600000000-AddTopicCategory';
 import { AddTicketQuestionOrder1760300000000 } from './migrations/1760300000000-AddTicketQuestionOrder';
@@ -68,6 +69,7 @@ import { ContactMessage } from './contact-messages/entities/contact-message.enti
             AddTopicCategory1760600000000,
             AddQuestionIsActive1760700000000,
             AddRefreshTokenRevokedReason1760800000000,
+            AddTopicTranslations1760900000000,
           ],
           migrationsRun: true,
           ssl,

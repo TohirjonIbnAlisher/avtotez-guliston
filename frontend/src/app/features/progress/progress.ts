@@ -1,3 +1,4 @@
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -102,7 +103,7 @@ export class ProgressPage {
   readonly hoveredDayIndex = signal<number | null>(null);
 
   constructor() {
-    this.topicsApi.findAll().subscribe({ next: (topics) => this.topics.set(topics) });
+    this.topicsApi.localized$.pipe(takeUntilDestroyed()).subscribe({ next: (topics) => this.topics.set(topics) });
   }
 
   setRange(range: RangeKey): void {

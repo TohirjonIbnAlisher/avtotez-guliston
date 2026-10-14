@@ -1,5 +1,6 @@
 import { Question } from './entities/question.entity';
 import { DEFAULT_LOCALE, Locale } from './locale';
+import { localizeTopic } from '../topics/localize-topic';
 
 export interface ResolvedQuestion {
   id: string;
@@ -30,7 +31,7 @@ export function resolveQuestion(question: Question, lang: Locale): ResolvedQuest
       question.explanation?.[lang] ?? question.explanation?.[fallback] ?? null,
     isTricky: question.isTricky,
     isNumberRelated: question.isNumberRelated,
-    topic: question.topic,
+    topic: localizeTopic(question.topic, lang),
     topicOrder: question.topicOrder,
   };
 }

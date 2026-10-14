@@ -1,8 +1,13 @@
-export interface Topic {
-  id: string;
+export interface TopicTexts {
   name: string;
   description: string | null;
   category: string | null;
+}
+
+export interface Topic extends TopicTexts {
+  id: string;
+  /** Faqat admin uchun (tilsiz so'rovda): kirillcha va ruscha ko'rinishlari. */
+  translations?: Partial<Record<'uzk' | 'ru', TopicTexts>> | null;
 }
 
 export interface Question {

@@ -8,6 +8,7 @@ import { UpdateQuestionDto } from './dto/update-question.dto';
 import { DEFAULT_LOCALE, Locale } from './locale';
 import { resolveQuestion, ResolvedQuestion } from './resolve-question';
 import { makeRoomAt, renumberTopicOrder } from './topic-order';
+import { completeLocales } from '../i18n/auto-translate';
 
 interface FindQuestionsOptions {
   topicId?: string;
@@ -27,7 +28,8 @@ export class QuestionsService {
     private readonly topicsRepository: Repository<Topic>,
   ) {}
 
-  async create(dto: CreateQuestionDto): Promise<Question> {
+  async create(input: CreateQuestionDto): Promise<Question> {
+    const dto = await this.withAutoLocales(input);
     const topic = dto.topicId ? await this.getTopicOrThrow(dto.topicId) : null;
 
     return this.dataSource.transaction(async (manager) => {
@@ -95,9 +97,9 @@ export class QuestionsService {
     return this.resolve(question, lang);
   }
 
-  async update(id: string, dto: UpdateQuestionDto): Promise<Question> {
+  async update(id: string, input: UpdateQuestionDto): Promise<Question> {
     const question = await this.findEntityOrThrow(id);
-    const { topicId, topicOrder, ...rest } = dto;
+    const { topicId, topicOrder, ...rest } = await this.withAutoLocales(input);
     const oldTopicId = question.topic?.id ?? null;
     const topic =
       topicId === undefined ? question.topic : topicId === null ? null : await this.getTopicOrThrow(topicId);
@@ -155,6 +157,52 @@ export class QuestionsService {
       await manager.delete(Question, { id });
       await renumberTopicOrder(manager, [question.topic?.id ?? null]);
     });
+  }
+
+  /**
+   * Admin faqat o'zbekcha (lotin) matnni kiritishi yetarli: bo'sh qolgan kirillcha matn
+   * avtomatik o'giriladi, ruscha esa tarjima qilinadi. Qo'lda kiritilganlari saqlanadi.
+   */
+  private async withAutoLocales<T extends Partial<Pick<CreateQuestionDto, 'text' | 'options' | 'explanation'>>>(
+    dto: T,
+  ): Promise<T> {
+    const blank = (v: string | null | undefined) => !v?.trim();
+    if (dto.text && blank(dto.text.uz)) {
+      throw new BadRequestException("Savol matni o'zbek (lotin) tilida kiritilishi shart.");
+    }
+    const optionsUz = dto.options?.uz ?? [];
+    if (dto.options && (optionsUz.length < 2 || optionsUz.some((o) => blank(o)))) {
+      throw new BadRequestException("Kamida 2 ta variant o'zbek (lotin) tilida to'ldirilishi shart.");
+    }
+    const hasExplanation = !blank(dto.explanation?.uz);
+
+    const items: Array<{ uz: string; uzk?: string | null; ru?: string | null }> = [];
+    if (dto.text) {
+      items.push(dto.text);
+    }
+    optionsUz.forEach((uz, i) => items.push({ uz, uzk: dto.options?.uzk?.[i], ru: dto.options?.ru?.[i] }));
+    if (hasExplanation) {
+      items.push(dto.explanation as { uz: string });
+    }
+    if (!items.length) {
+      return dto;
+    }
+
+    const done = await completeLocales(items);
+    const out = { ...dto };
+    let k = 0;
+    if (dto.text) {
+      out.text = done[k++];
+    }
+    if (dto.options) {
+      const rows = done.slice(k, k + optionsUz.length);
+      k += optionsUz.length;
+      out.options = { uz: rows.map((r) => r.uz), uzk: rows.map((r) => r.uzk), ru: rows.map((r) => r.ru) };
+    }
+    if (hasExplanation) {
+      out.explanation = { ...dto.explanation, ...done[k++] };
+    }
+    return out;
   }
 
   private async reload(manager: EntityManager, id: string): Promise<Question> {

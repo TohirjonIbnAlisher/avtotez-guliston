@@ -1,3 +1,4 @@
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TopicsApiService } from '../../../core/services/topics-api.service';
@@ -34,7 +35,7 @@ export class TopicsList {
   private readonly topics = signal<Topic[]>([]);
 
   constructor() {
-    this.topicsApi.findAll().subscribe({
+    this.topicsApi.localized$.pipe(takeUntilDestroyed()).subscribe({
       next: (topics) => {
         this.topics.set(topics);
         this.loading.set(false);

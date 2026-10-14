@@ -1,16 +1,26 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TopicsApiService } from '../../../core/services/topics-api.service';
-import { Topic } from '../../../core/models/question.model';
+import { TopicPayload, TopicsApiService } from '../../../core/services/topics-api.service';
+import { Topic, TopicTexts } from '../../../core/models/question.model';
+
+type TrLang = 'uzk' | 'ru';
+type TrField = 'name' | 'category' | 'description';
+type TrState = Record<TrLang, Record<TrField, string>>;
 
 interface TopicFormState {
   id: string | null;
   name: string;
   description: string;
   category: string;
+  /** Kirillcha va ruscha ko'rinishlar (tahrirlashda — bazadagilari). */
+  tr: TrState;
 }
 
-const EMPTY_FORM: TopicFormState = { id: null, name: '', description: '', category: '' };
+const emptyTr = (): TrState => ({
+  uzk: { name: '', category: '', description: '' },
+  ru: { name: '', category: '', description: '' },
+});
+const EMPTY_FORM: TopicFormState = { id: null, name: '', description: '', category: '', tr: emptyTr() };
 
 @Component({
   selector: 'app-admin-topics',
@@ -25,7 +35,19 @@ export class AdminTopics {
   readonly error = signal<string | null>(null);
   readonly formOpen = signal(false);
   readonly saving = signal(false);
-  readonly form = signal<TopicFormState>({ ...EMPTY_FORM });
+  readonly form = signal<TopicFormState>({ ...EMPTY_FORM, tr: emptyTr() });
+  readonly showTranslations = signal(false);
+  protected readonly trLangs: { key: TrLang; label: string }[] = [
+    { key: 'uzk', label: 'Ўзбек (кирилл)' },
+    { key: 'ru', label: 'Русский' },
+  ];
+  protected readonly trFields: { key: TrField; label: string }[] = [
+    { key: 'name', label: 'Nomi' },
+    { key: 'category', label: 'Kategoriya' },
+    { key: 'description', label: 'Tavsif' },
+  ];
+  /** Admin qo'lda o'zgartirgan tarjima maydonlari — faqat shular serverga yuboriladi. */
+  private readonly touched = new Set<string>();
 
   constructor() {
     this.load();
@@ -46,7 +68,9 @@ export class AdminTopics {
   }
 
   openCreate(): void {
-    this.form.set({ ...EMPTY_FORM });
+    this.form.set({ ...EMPTY_FORM, tr: emptyTr() });
+    this.touched.clear();
+    this.showTranslations.set(false);
     this.formOpen.set(true);
   }
 
@@ -56,7 +80,13 @@ export class AdminTopics {
       name: topic.name,
       description: topic.description ?? '',
       category: topic.category ?? '',
+      tr: {
+        uzk: textsOf(topic.translations?.uzk),
+        ru: textsOf(topic.translations?.ru),
+      },
     });
+    this.touched.clear();
+    this.showTranslations.set(false);
     this.formOpen.set(true);
   }
 
@@ -69,6 +99,11 @@ export class AdminTopics {
     this.form.update((f) => ({ ...f, [key]: value }));
   }
 
+  updateTranslation(lang: TrLang, field: TrField, value: string): void {
+    this.touched.add(`${lang}.${field}`);
+    this.form.update((f) => ({ ...f, tr: { ...f.tr, [lang]: { ...f.tr[lang], [field]: value } } }));
+  }
+
   submit(): void {
     const f = this.form();
     if (f.name.trim().length < 2) {
@@ -79,10 +114,17 @@ export class AdminTopics {
     this.saving.set(true);
     this.error.set(null);
 
-    const payload = {
+    // faqat qo'lda tuzatilgan tarjimalar yuboriladi; qolganlari o'zbekchasidan avtomatik yaratiladi
+    const translations: NonNullable<TopicPayload['translations']> = {};
+    for (const key of this.touched) {
+      const [lang, field] = key.split('.') as [TrLang, TrField];
+      (translations[lang] ??= {})[field] = f.tr[lang][field];
+    }
+    const payload: TopicPayload = {
       name: f.name,
       description: f.description || undefined,
       category: f.category || undefined,
+      translations,
     };
     const request = f.id ? this.topicsApi.update(f.id, payload) : this.topicsApi.create(payload);
 
@@ -108,4 +150,8 @@ export class AdminTopics {
       error: () => this.error.set("Mavzuni o'chirib bo'lmadi."),
     });
   }
+}
+
+function textsOf(t: TopicTexts | undefined): Record<TrField, string> {
+  return { name: t?.name ?? '', category: t?.category ?? '', description: t?.description ?? '' };
 }

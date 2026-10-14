@@ -26,6 +26,19 @@
         </p>
       }
 
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-sky-50 px-3 py-2 dark:bg-sky-500/10">
+        <p class="text-sm text-sky-800 dark:text-sky-300">
+          🌐 O'zbekcha (lotin) kiriting — kirillcha va ruscha ko'rinishlari avtomatik qo'shiladi.
+        </p>
+        <button
+          type="button"
+          class="shrink-0 text-sm font-semibold text-sky-700 hover:underline dark:text-sky-300"
+          (click)="showTranslations.set(!showTranslations())"
+        >
+          {{ showTranslations() ? 'Tarjimalarni yashirish' : "Tarjimalarni ko'rish / tuzatish" }}
+        </button>
+      </div>
+
       <div class="mt-4 flex flex-col gap-4">
         <div>
           <label class="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Nomi</label>
@@ -57,9 +70,31 @@
         </div>
       </div>
 
+      @if (showTranslations()) {
+        <p class="mt-4 text-xs text-slate-500 dark:text-slate-400">
+          Bo'sh qoldirilgan maydonlar avtomatik to'ldiriladi. O'zbekcha matn o'zgarsa, qo'lda tuzatilmagan tarjimalar qayta yaratiladi.
+        </p>
+        <div class="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          @for (lang of trLangs; track lang.key) {
+            <div class="flex flex-col gap-2 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+              <div class="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ lang.label }}</div>
+              @for (field of trFields; track field.key) {
+                <input
+                  type="text"
+                  [placeholder]="field.label + ' (avtomatik)'"
+                  [value]="form().tr[lang.key][field.key]"
+                  (input)="updateTranslation(lang.key, field.key, $any($event.target).value)"
+                  class="w-full rounded-lg border-2 border-slate-200 px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              }
+            </div>
+          }
+        </div>
+      }
+
       <div class="mt-5 flex gap-3">
         <button type="button" class="btn-primary" [disabled]="saving()" (click)="submit()">
-          {{ saving() ? 'Saqlanmoqda...' : 'Saqlash' }}
+          {{ saving() ? 'Saqlanmoqda (tarjima qilinmoqda)...' : 'Saqlash' }}
         </button>
         <button
           type="button"
@@ -86,6 +121,9 @@
                 </div>
               }
               <h3 class="font-bold text-slate-900 dark:text-white">{{ topic.name }}</h3>
+              @if (topic.translations?.ru?.name) {
+                <div class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">RU: {{ topic.translations?.ru?.name }}</div>
+              }
             </div>
           </div>
           @if (topic.description) {

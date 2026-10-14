@@ -78,21 +78,27 @@ async function main(): Promise<void> {
 
   if (stored === hash) {
     console.log("[release-seed] Ma'lumotlar o'zgarmagan — seed kerak emas.");
-    return;
+  } else {
+    console.log("[release-seed] data/ o'zgargan — seed'lar ishga tushirilmoqda...");
+    for (const step of STEPS) {
+      runStep(step.script, step.args);
+    }
+
+    await withDataSource((ds) =>
+      ds.query(
+        `INSERT INTO "seed_state" ("key", "value", "updated_at") VALUES ($1, $2, now())
+         ON CONFLICT ("key") DO UPDATE SET "value" = EXCLUDED."value", "updated_at" = now()`,
+        [STATE_KEY, hash],
+      ),
+    );
   }
 
-  console.log("[release-seed] data/ o'zgargan — seed'lar ishga tushirilmoqda...");
-  for (const step of STEPS) {
-    runStep(step.script, step.args);
+  // Har safar: kirillcha/ruscha ko'rinishi yo'q mavzu va savollar to'ldiriladi (tarmoq xatosida — keyingi safar).
+  try {
+    runStep('translate-missing', []);
+  } catch (err) {
+    console.warn("[release-seed] Tarjimalarni to'ldirib bo'lmadi:", (err as Error).message);
   }
-
-  await withDataSource((ds) =>
-    ds.query(
-      `INSERT INTO "seed_state" ("key", "value", "updated_at") VALUES ($1, $2, now())
-       ON CONFLICT ("key") DO UPDATE SET "value" = EXCLUDED."value", "updated_at" = now()`,
-      [STATE_KEY, hash],
-    ),
-  );
   console.log('[release-seed] Tayyor.');
 }
 

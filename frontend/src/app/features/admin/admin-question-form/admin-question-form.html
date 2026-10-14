@@ -51,9 +51,27 @@
         </div>
       }
 
+      <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-sky-50 px-4 py-3 dark:bg-sky-500/10">
+        <p class="text-sm text-sky-800 dark:text-sky-300">
+          🌐 O'zbekcha (lotin) kiritish yetarli: <b>kirillcha</b> avtomatik o'giriladi, <b>ruscha</b> avtomatik tarjima qilinadi.
+        </p>
+        <button
+          type="button"
+          class="shrink-0 text-sm font-semibold text-sky-700 hover:underline dark:text-sky-300"
+          (click)="showTranslations.set(!showTranslations())"
+        >
+          {{ showTranslations() ? 'Tarjimalarni yashirish' : "Tarjimalarni ko'rish / tuzatish" }}
+        </button>
+      </div>
+      @if (showTranslations()) {
+        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          Bo'sh qoldirilgan kirillcha/ruscha maydonlar saqlashda avtomatik to'ldiriladi. O'zbekcha matn o'zgarsa, qo'lda tuzatilmagan tarjimalar qayta yaratiladi.
+        </p>
+      }
+
       <h2 class="mt-6 text-base font-bold text-slate-900 dark:text-white">Savol matni</h2>
       <div class="mt-2 grid grid-cols-1 gap-4">
-        @for (lang of langKeys; track lang) {
+        @for (lang of visibleLangs(); track lang) {
           <div>
             <label class="mb-1 block text-xs font-semibold text-slate-500 dark:text-slate-400">{{ langLabels[lang] }}</label>
             <textarea
@@ -110,8 +128,8 @@
                 </button>
               }
             </div>
-            <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-              @for (lang of langKeys; track lang) {
+            <div [class]="showTranslations() ? 'mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3' : 'mt-2 grid grid-cols-1 gap-2'">
+              @for (lang of visibleLangs(); track lang) {
                 <input
                   type="text"
                   [placeholder]="langLabels[lang]"
@@ -130,7 +148,7 @@
 
       <div class="mt-6 flex gap-3">
         <button type="button" class="btn-primary" [disabled]="saving()" (click)="submit()">
-          {{ saving() ? 'Saqlanmoqda...' : 'Saqlash' }}
+          {{ saving() ? 'Saqlanmoqda (tarjima qilinmoqda)...' : 'Saqlash' }}
         </button>
         <a
           routerLink="/admin/questions"

@@ -1,4 +1,5 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsObject, IsOptional, IsString, MinLength } from 'class-validator';
+import type { TopicTexts } from '../entities/topic.entity';
 
 export class CreateTopicDto {
   @IsString()
@@ -12,4 +13,9 @@ export class CreateTopicDto {
   @IsOptional()
   @IsString()
   category?: string;
+
+  /** Qo'lda tuzatilgan tarjimalar (ixtiyoriy) — bo'sh maydonlar avtomatik to'ldiriladi. */
+  @IsOptional()
+  @IsObject()
+  translations?: Partial<Record<'uzk' | 'ru', Partial<TopicTexts>>>;
 }

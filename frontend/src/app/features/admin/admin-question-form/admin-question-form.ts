@@ -10,6 +10,8 @@ interface OptionRow {
   uz: string;
   uzk: string;
   ru: string;
+  /** Bazadan yuklangan asl qiymatlar (yangi qatorda yo'q). */
+  orig?: { uz: string; uzk: string; ru: string };
 }
 
 type LangKey = 'uz' | 'uzk' | 'ru';
@@ -28,6 +30,9 @@ export class AdminQuestionForm {
 
   protected readonly langKeys: LangKey[] = ['uz', 'uzk', 'ru'];
   protected readonly langLabels = LANG_LABELS;
+  /** Kirillcha va ruscha maydonlar ko'rsatilsinmi (aks holda ular saqlashda avtomatik to'ldiriladi). */
+  readonly showTranslations = signal(false);
+  protected readonly visibleLangs = computed<LangKey[]>(() => (this.showTranslations() ? this.langKeys : ['uz']));
 
   private readonly questionId = this.route.snapshot.paramMap.get('id');
   protected readonly isEdit = !!this.questionId;
@@ -49,6 +54,7 @@ export class AdminQuestionForm {
     return this.isEdit && this.topicId() === this.originalTopicId ? count : count + 1;
   });
   readonly text = signal<Record<LangKey, string>>({ uz: '', uzk: '', ru: '' });
+  private originalText: Record<LangKey, string> = { uz: '', uzk: '', ru: '' };
   readonly options = signal<OptionRow[]>([
     { uz: '', uzk: '', ru: '' },
     { uz: '', uzk: '', ru: '' },
@@ -84,13 +90,13 @@ export class AdminQuestionForm {
       ru: this.questionsApi.findOne(id, 'ru'),
     }).subscribe({
       next: ({ uz, uzk, ru }) => {
-        this.text.set({ uz: uz.text, uzk: uzk.text, ru: ru.text });
+        this.originalText = { uz: uz.text, uzk: uzk.text, ru: ru.text };
+        this.text.set({ ...this.originalText });
         this.options.set(
-          uz.options.map((_, i) => ({
-            uz: uz.options[i] ?? '',
-            uzk: uzk.options[i] ?? '',
-            ru: ru.options[i] ?? '',
-          })),
+          uz.options.map((_, i) => {
+            const row = { uz: uz.options[i] ?? '', uzk: uzk.options[i] ?? '', ru: ru.options[i] ?? '' };
+            return { ...row, orig: row };
+          }),
         );
         this.correctIndex.set(uz.correctOptionIndex);
         this.originalTopicId = uz.topic?.id ?? '';
@@ -194,16 +200,13 @@ export class AdminQuestionForm {
   }
 
   submit(): void {
-    const missingLang = this.langKeys.find((lang) => !this.text()[lang].trim());
-    if (missingLang) {
-      this.error.set(`Savol matni "${LANG_LABELS[missingLang]}" tilida to'ldirilishi shart.`);
+    // Faqat o'zbekcha (lotin) majburiy — kirillcha va ruscha server tomonida avtomatik to'ldiriladi.
+    if (!this.text().uz.trim()) {
+      this.error.set(`Savol matni "${LANG_LABELS.uz}" tilida to'ldirilishi shart.`);
       return;
     }
-    const incompleteOption = this.options().find(
-      (row) => !row.uz.trim() || !row.uzk.trim() || !row.ru.trim(),
-    );
-    if (incompleteOption) {
-      this.error.set("Barcha variantlar uchta tilda ham to'ldirilishi shart.");
+    if (this.options().some((row) => !row.uz.trim())) {
+      this.error.set(`Barcha variantlar "${LANG_LABELS.uz}" tilida to'ldirilishi shart.`);
       return;
     }
 
@@ -232,12 +235,13 @@ export class AdminQuestionForm {
   }
 
   private save(imageUrl: string | null, videoUrl: string | null): void {
+    const rows = this.options().map((row) => withAutoLocales(row, row.orig));
     const payload: AdminQuestionPayload = {
-      text: this.text(),
+      text: withAutoLocales(this.text(), this.originalText),
       options: {
-        uz: this.options().map((r) => r.uz),
-        uzk: this.options().map((r) => r.uzk),
-        ru: this.options().map((r) => r.ru),
+        uz: rows.map((r) => r.uz),
+        uzk: rows.map((r) => r.uzk),
+        ru: rows.map((r) => r.ru),
       },
       correctOptionIndex: this.correctIndex(),
       imageUrl,
@@ -269,4 +273,17 @@ export class AdminQuestionForm {
       return url;
     }
   }
+}
+
+/**
+ * O'zbekcha matn o'zgargan bo'lsa, qo'lda o'zgartirilmagan kirillcha/ruscha qiymatlar bo'shatiladi —
+ * server ularni yangi o'zbekcha matndan qayta yaratadi. Bo'sh qiymatlar ham server tomonida to'ldiriladi.
+ */
+function withAutoLocales(
+  value: Record<LangKey, string>,
+  orig: Record<LangKey, string> = { uz: '', uzk: '', ru: '' },
+): Record<LangKey, string> {
+  const uzChanged = value.uz.trim() !== orig.uz.trim();
+  const keep = (lang: 'uzk' | 'ru') => (uzChanged && value[lang] === orig[lang] ? '' : value[lang].trim());
+  return { uz: value.uz.trim(), uzk: keep('uzk'), ru: keep('ru') };
 }

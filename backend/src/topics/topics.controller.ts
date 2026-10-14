@@ -8,11 +8,13 @@ import {
   Delete,
   ParseUUIDPipe,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { TopicsService } from './topics.service';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
 import { SuperAdminGuard } from '../auth/superadmin.guard';
+import { parseLocaleParam } from '../questions/locale';
 
 @Controller('topics')
 export class TopicsController {
@@ -25,8 +27,8 @@ export class TopicsController {
   }
 
   @Get()
-  findAll() {
-    return this.topicsService.findAll();
+  findAll(@Query('lang') lang?: string) {
+    return this.topicsService.findAll(lang ? parseLocaleParam(lang) : undefined);
   }
 
   @Get(':id')
