@@ -1,0 +1,62 @@
+<section class="mx-auto max-w-5xl px-6 py-12">
+  <a routerLink="/admin" class="mb-4 inline-block text-sm font-semibold text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+    ← Boshqaruv paneli
+  </a>
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white">Biletlar</h1>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        Jami {{ tickets().length }} ta bilet
+        @if (incompleteCount() > 0) {
+          · <span class="font-semibold text-amber-500">{{ incompleteCount() }} tasida {{ ticketSize }} ta savol emas</span>
+        }
+      </p>
+    </div>
+    <a routerLink="/admin/tickets/new" class="btn-primary">+ Yangi bilet</a>
+  </div>
+
+  <input
+    type="text"
+    inputmode="numeric"
+    [value]="search()"
+    (input)="search.set($any($event.target).value)"
+    placeholder="Bilet raqami bo'yicha qidirish"
+    class="mt-5 w-full max-w-xs rounded-xl border-2 border-slate-200 px-4 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+  />
+
+  @if (error()) {
+    <p class="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:bg-red-500/10 dark:text-red-400">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="animate-pulse mt-8 text-center text-slate-500 dark:text-slate-400">Yuklanmoqda...</p>
+  } @else if (filtered().length === 0) {
+    <p class="mt-8 text-center text-slate-500 dark:text-slate-400">Bilet topilmadi.</p>
+  } @else {
+    <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      @for (ticket of filtered(); track ticket.id) {
+        <div class="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-lg font-extrabold text-slate-900 dark:text-white">{{ ticket.number }}-bilet</span>
+            <span
+              class="rounded-full px-2.5 py-0.5 text-xs font-bold"
+              [class]="ticket.questionCount === ticketSize ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : ticket.questionCount === 0 ? 'bg-red-500/15 text-red-600 dark:text-red-400' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'"
+            >{{ ticket.questionCount }}/{{ ticketSize }}</span>
+          </div>
+          @if (ticket.questionCount === 0) {
+            <p class="mt-1 text-xs text-slate-400">Saytda ko'rinmaydi — faol savoli yo'q</p>
+          }
+          <div class="mt-4 flex gap-2">
+            <a [routerLink]="['/admin/tickets', ticket.id, 'edit']" class="flex-1 rounded-lg bg-slate-100 py-2 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+              Tahrirlash
+            </a>
+            <button type="button" (click)="remove(ticket)" class="rounded-lg px-3 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-50 dark:hover:bg-red-500/10" title="O'chirish">
+              🗑
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>

@@ -123,4 +123,22 @@ export const routes: Routes = [
         (m) => m.AdminQuestionForm,
       ),
   },
+  {
+    path: 'admin/tickets',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () =>
+      import('./features/admin/admin-tickets/admin-tickets').then((m) => m.AdminTickets),
+  },
+  {
+    path: 'admin/tickets/new',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () =>
+      import('./features/admin/admin-ticket-form/admin-ticket-form').then((m) => m.AdminTicketForm),
+  },
+  {
+    path: 'admin/tickets/:id/edit',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () =>
+      import('./features/admin/admin-ticket-form/admin-ticket-form').then((m) => m.AdminTicketForm),
+  },
 ];

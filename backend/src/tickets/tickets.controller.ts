@@ -33,6 +33,20 @@ export class TicketsController {
     return this.ticketsService.findAll(this.parseLocale(lang));
   }
 
+  // ---------- Admin panel (superadmin) ----------
+
+  @Get('admin')
+  @UseGuards(SuperAdminGuard)
+  adminList() {
+    return this.ticketsService.adminList();
+  }
+
+  @Get('admin/:id')
+  @UseGuards(SuperAdminGuard)
+  adminFindOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.ticketsService.adminFindOne(id);
+  }
+
   // Ro'yxat uchun yengil javob: faqat raqam va savollar soni (savollarsiz).
   @Get('summary')
   summary() {

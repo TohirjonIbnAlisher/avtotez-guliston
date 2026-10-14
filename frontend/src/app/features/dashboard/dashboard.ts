@@ -4,6 +4,7 @@ import { LanguageService, LOCALE_OPTIONS } from '../../core/services/language.se
 import { TranslateService } from '../../core/services/translate.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProgressService } from '../../core/services/progress.service';
+import { ActiveProgressService } from '../../core/services/active-progress.service';
 import { QuestionsStore } from '../../core/services/questions-store.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { StreakService } from '../../core/services/streak.service';
@@ -26,8 +27,6 @@ interface RoadStage {
   done: boolean;
 }
 
-/** Rasmiy biletlar soni (ptest.uz bilan bir xil). */
-const TOTAL_TICKETS = 66;
 
 // Spidometr: markazi (130, 140), radiusi 100 bo'lgan yarim aylana.
 const GAUGE_LENGTH = Math.PI * 100;
@@ -89,6 +88,8 @@ export class Dashboard {
   protected readonly translate = inject(TranslateService);
   protected readonly auth = inject(AuthService);
   protected readonly progress = inject(ProgressService);
+  /** Statistika faqat faol savollar va ko'rinadigan biletlar bo'yicha. */
+  private readonly stats = inject(ActiveProgressService);
   protected readonly questionsStore = inject(QuestionsStore);
   protected readonly theme = inject(ThemeService);
   private readonly streak = inject(StreakService);
@@ -114,8 +115,8 @@ export class Dashboard {
   protected readonly roleLabel = computed(() => this.translate.t(`dashboard.role.${this.userRole()}`));
 
   protected readonly totalQuestions = computed(() => this.questionsStore.questions().length);
-  protected readonly correctCount = computed(() => this.progress.correctIds().size);
-  protected readonly wrongCount = computed(() => Object.keys(this.progress.mistakes()).length);
+  protected readonly correctCount = computed(() => this.stats.correctIds().size);
+  protected readonly wrongCount = computed(() => Object.keys(this.stats.mistakes()).length);
   protected readonly skippedCount = computed(() =>
     Math.max(0, this.totalQuestions() - this.correctCount() - this.wrongCount()),
   );
@@ -144,21 +145,21 @@ export class Dashboard {
   protected readonly topicsPercent = computed(() => {
     const questions = this.topicQuestions();
     if (!questions.length) return 0;
-    const correct = this.progress.correctIds();
-    const mistakes = this.progress.mistakes();
+    const correct = this.stats.correctIds();
+    const mistakes = this.stats.mistakes();
     const answered = questions.filter((q) => correct.has(q.id) || q.id in mistakes).length;
     return Math.round((answered / questions.length) * 100);
   });
-  protected readonly ticketsAttempted = computed(() => Object.keys(this.progress.ticketStats()).length);
+  protected readonly ticketsAttempted = computed(() => Object.keys(this.stats.ticketStats()).length);
   protected readonly ticketsPercent = computed(() =>
-    Math.min(100, Math.round((this.ticketsAttempted() / TOTAL_TICKETS) * 100)),
+    Math.min(100, Math.round((this.ticketsAttempted() / Math.max(1, this.totalTickets())) * 100)),
   );
-  protected readonly totalTickets = TOTAL_TICKETS;
+  protected readonly totalTickets = computed(() => this.stats.tickets().length);
 
   private readonly todayEvents = computed(() => {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
-    return this.progress.history().filter((e) => e.timestamp >= start.getTime());
+    return this.stats.history().filter((e) => e.timestamp >= start.getTime());
   });
   protected readonly todayCount = computed(() => this.todayEvents().length);
 
@@ -174,7 +175,7 @@ export class Dashboard {
   /** So'nggi 7 kun: har kuni yechilgan savollar soni. */
   protected readonly weekBars = computed(() => {
     const days: { label: string; count: number; today: boolean; reached: boolean }[] = [];
-    const history = this.progress.history();
+    const history = this.stats.history();
     for (let i = 6; i >= 0; i--) {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
@@ -231,8 +232,8 @@ export class Dashboard {
 
   /** "Davom ettirish": birinchi yechilmagan bilet, hammasi yechilgan bo'lsa — xatolar yoki imtihon. */
   protected readonly continueTarget = computed(() => {
-    const stats = this.progress.ticketStats();
-    for (let n = 1; n <= TOTAL_TICKETS; n++) {
+    const stats = this.stats.ticketStats();
+    for (const { number: n } of this.stats.tickets()) {
       if (!stats[n]) {
         return { route: `/tests/tickets/${n}`, label: this.translate.t('dashboard.continue.ticket', { n }) };
       }

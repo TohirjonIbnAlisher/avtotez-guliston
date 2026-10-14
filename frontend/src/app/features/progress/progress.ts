@@ -3,11 +3,11 @@ import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { QuestionsStore } from '../../core/services/questions-store.service';
 import { ProgressService } from '../../core/services/progress.service';
+import { ActiveProgressService } from '../../core/services/active-progress.service';
 import { StreakService } from '../../core/services/streak.service';
 import { TopicsApiService } from '../../core/services/topics-api.service';
-import { TicketsApiService } from '../../core/services/tickets-api.service';
 import { TestHistoryService, TestSessionRecord } from '../../core/services/test-history.service';
-import { Topic, TicketSummary as TicketListItem } from '../../core/models/question.model';
+import { Topic } from '../../core/models/question.model';
 import { TranslateService } from '../../core/services/translate.service';
 import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -85,24 +85,24 @@ function startOfDay(d: Date): Date {
 export class ProgressPage {
   protected readonly store = inject(QuestionsStore);
   protected readonly progress = inject(ProgressService);
+  /** Statistika faqat faol savollar va ko'rinadigan biletlar bo'yicha. */
+  private readonly stats = inject(ActiveProgressService);
   protected readonly streak = inject(StreakService);
   protected readonly testHistory = inject(TestHistoryService);
   private readonly topicsApi = inject(TopicsApiService);
-  private readonly ticketsApi = inject(TicketsApiService);
   protected readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
   private readonly auth = inject(AuthService);
   private readonly prefs = inject(TestPreferencesService);
 
   private readonly topics = signal<Topic[]>([]);
-  private readonly tickets = signal<TicketListItem[]>([]);
+  private readonly tickets = computed(() => this.stats.tickets());
 
   readonly range = signal<RangeKey>('30d');
   readonly hoveredDayIndex = signal<number | null>(null);
 
   constructor() {
     this.topicsApi.findAll().subscribe({ next: (topics) => this.topics.set(topics) });
-    this.ticketsApi.summary().subscribe({ next: (tickets) => this.tickets.set(tickets) });
   }
 
   setRange(range: RangeKey): void {
@@ -113,8 +113,8 @@ export class ProgressPage {
   // ---------- All-time state (hero, donut, topics, radials) ----------
 
   readonly totalQuestions = computed(() => this.store.questions().length);
-  readonly correctCount = computed(() => this.progress.correctIds().size);
-  readonly wrongCount = computed(() => Object.keys(this.progress.mistakes()).length);
+  readonly correctCount = computed(() => this.stats.correctIds().size);
+  readonly wrongCount = computed(() => Object.keys(this.stats.mistakes()).length);
   readonly skippedCount = computed(() =>
     Math.max(0, this.totalQuestions() - this.correctCount() - this.wrongCount()),
   );
@@ -134,7 +134,7 @@ export class ProgressPage {
   );
 
   readonly topicStats = computed<TopicStat[]>(() => {
-    const correctIds = this.progress.correctIds();
+    const correctIds = this.stats.correctIds();
     return this.topics()
       .map((topic) => {
         const questions = this.store.byTopic(topic.id);
@@ -167,7 +167,7 @@ export class ProgressPage {
   );
 
   private hasAnyAttempt(topicId: string): boolean {
-    const mistakeIds = new Set(Object.keys(this.progress.mistakes()));
+    const mistakeIds = new Set(Object.keys(this.stats.mistakes()));
     return this.store.byTopic(topicId).some((q) => mistakeIds.has(q.id));
   }
 
@@ -180,7 +180,7 @@ export class ProgressPage {
   });
 
   readonly ticketSummary = computed<TicketSummary>(() => {
-    const stats = this.progress.ticketStats();
+    const stats = this.stats.ticketStats();
     let green = 0;
     let yellow = 0;
     let red = 0;
@@ -213,7 +213,7 @@ export class ProgressPage {
       case '30d':
         return 30;
       case 'all': {
-        const history = this.progress.history();
+        const history = this.stats.history();
         if (!history.length) {
           return 7;
         }
@@ -227,7 +227,7 @@ export class ProgressPage {
   readonly rangeStartMs = computed(() => startOfDay(new Date()).getTime() - (this.rangeDays() - 1) * DAY_MS);
 
   readonly filteredHistory = computed(() =>
-    this.progress.history().filter((e) => e.timestamp >= this.rangeStartMs()),
+    this.stats.history().filter((e) => e.timestamp >= this.rangeStartMs()),
   );
 
   readonly periodCorrect = computed(() => this.filteredHistory().filter((e) => e.isCorrect).length);
@@ -237,7 +237,7 @@ export class ProgressPage {
     const days = this.rangeDays();
     const start = this.rangeStartMs() - days * DAY_MS;
     const end = this.rangeStartMs();
-    return this.progress.history().filter((e) => e.timestamp >= start && e.timestamp < end);
+    return this.stats.history().filter((e) => e.timestamp >= start && e.timestamp < end);
   });
 
   readonly previousPeriodCorrect = computed(() => this.previousPeriod().filter((e) => e.isCorrect).length);
@@ -247,7 +247,7 @@ export class ProgressPage {
   readonly wrongTrend = computed(() => this.trendPercent(this.periodWrong(), this.previousPeriodWrong()));
 
   private trendPercent(current: number, previous: number): number | null {
-    if (this.progress.history().length === 0) {
+    if (this.stats.history().length === 0) {
       return null;
     }
     if (previous === 0) {
@@ -278,7 +278,7 @@ export class ProgressPage {
       return 0;
     }
     const firstCorrect = new Map<string, number>();
-    for (const e of this.progress.history()) {
+    for (const e of this.stats.history()) {
       if (!e.isCorrect) continue;
       const existing = firstCorrect.get(e.questionId);
       if (existing === undefined || e.timestamp < existing) {
@@ -287,7 +287,7 @@ export class ProgressPage {
     }
     // Correct questions with no logged event predate this feature — treat as "already known".
     let countBefore = 0;
-    for (const id of this.progress.correctIds()) {
+    for (const id of this.stats.correctIds()) {
       const ts = firstCorrect.get(id) ?? 0;
       if (ts < sinceMs) {
         countBefore += 1;
@@ -296,7 +296,7 @@ export class ProgressPage {
     return Math.round((countBefore / total) * 100);
   }
 
-  readonly hasHistory = computed(() => this.progress.history().length > 0);
+  readonly hasHistory = computed(() => this.stats.history().length > 0);
 
   readonly heroDelta = computed(() => {
     if (!this.hasHistory()) {
@@ -337,7 +337,7 @@ export class ProgressPage {
 
   readonly answeredToday = computed(() => {
     const start = startOfDay(new Date()).getTime();
-    return this.progress.history().filter((e) => e.timestamp >= start).length;
+    return this.stats.history().filter((e) => e.timestamp >= start).length;
   });
 
   readonly goalTarget = this.prefs.dailyGoal;
@@ -351,7 +351,7 @@ export class ProgressPage {
   readonly heatmapWeeks = computed<HeatmapCell[][]>(() => {
     const totalDays = HEATMAP_WEEKS * 7;
     const counts = new Map<string, number>();
-    for (const e of this.progress.history()) {
+    for (const e of this.stats.history()) {
       const key = dateKey(new Date(e.timestamp));
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
@@ -443,7 +443,7 @@ export class ProgressPage {
     return id ? `AG ${id.slice(0, 7)}` : 'AG 0000000';
   });
   readonly startedAt = computed(() => {
-    const history = this.progress.history();
+    const history = this.stats.history();
     if (!history.length) return '—';
     const first = new Date(Math.min(...history.map((e) => e.timestamp)));
     return `${String(first.getDate()).padStart(2, '0')}.${String(first.getMonth() + 1).padStart(2, '0')}.${first.getFullYear()}`;
@@ -480,7 +480,7 @@ export class ProgressPage {
   // ---------- Biletlar parkovkasi ----------
 
   readonly ticketSpots = computed<TicketSpot[]>(() => {
-    const stats = this.progress.ticketStats();
+    const stats = this.stats.ticketStats();
     return this.tickets().map((ticket) => {
       const stat = stats[ticket.number];
       const color: SpotColor = !stat ? 'none' : stat.wrong <= 1 ? 'green' : stat.wrong === 2 ? 'yellow' : 'red';

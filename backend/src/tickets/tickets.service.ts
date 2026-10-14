@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Ticket } from './entities/ticket.entity';
@@ -42,6 +42,7 @@ export class TicketsService {
   ) {}
 
   async create(dto: CreateTicketDto): Promise<Ticket> {
+    await this.assertNumberFree(dto.number);
     const questions = await this.getQuestionsOrThrow(dto.questionIds);
     const ticket = this.ticketsRepository.create({
       number: dto.number,
@@ -49,6 +50,34 @@ export class TicketsService {
       questionOrder: dto.questionIds,
     });
     return this.ticketsRepository.save(ticket);
+  }
+
+  // ---------- Admin panel ----------
+
+  /** Barcha biletlar (faol savoli yo'qlari ham) — faol savollar soni bilan. */
+  async adminList(): Promise<{ id: string; number: number; questionCount: number }[]> {
+    const rows: { id: string; number: number; question_count: string }[] = await this.ticketsRepository
+      .createQueryBuilder('t')
+      .leftJoin('t.questions', 'q', 'q.isActive = true')
+      .select('t.id', 'id')
+      .addSelect('t.number', 'number')
+      .addSelect('COUNT(q.id)', 'question_count')
+      .groupBy('t.id')
+      .orderBy('t.number', 'ASC')
+      .getRawMany();
+    return rows.map((r) => ({ id: r.id, number: Number(r.number), questionCount: Number(r.question_count) }));
+  }
+
+  /** Tahrirlash uchun bitta bilet (faol savollari tartib bilan). */
+  async adminFindOne(id: string, lang: Locale = DEFAULT_LOCALE): Promise<ResolvedTicket> {
+    return resolveTicket(sortQuestionsBySourceId(await this.findEntityOrThrow(id)), lang);
+  }
+
+  private async assertNumberFree(number: number, exceptId?: string): Promise<void> {
+    const existing = await this.ticketsRepository.findOne({ where: { number } });
+    if (existing && existing.id !== exceptId) {
+      throw new ConflictException(`${number}-bilet allaqachon mavjud.`);
+    }
   }
 
   async findAll(lang: Locale = DEFAULT_LOCALE): Promise<ResolvedTicket[]> {
@@ -101,12 +130,18 @@ export class TicketsService {
 
   async update(id: string, dto: UpdateTicketDto): Promise<Ticket> {
     const ticket = await this.findEntityOrThrow(id);
-    const { questionIds, ...rest } = dto;
-    const questions = questionIds
-      ? await this.getQuestionsOrThrow(questionIds)
-      : ticket.questions;
-
-    Object.assign(ticket, rest, { questions }, questionIds ? { questionOrder: questionIds } : {});
+    const { questionIds, number } = dto;
+    if (number !== undefined && number !== ticket.number) {
+      await this.assertNumberFree(number, ticket.id);
+      ticket.number = number;
+    }
+    if (questionIds) {
+      // Admin panelda nofaol savollar ko'rinmaydi — ular biletdan tushib qolmasligi uchun saqlab qolinadi.
+      const kept = sortQuestionsBySourceId(ticket).questions.filter((q) => !q.isActive && !questionIds.includes(q.id));
+      const questions = await this.getQuestionsOrThrow(questionIds);
+      ticket.questions = [...questions, ...kept];
+      ticket.questionOrder = [...questionIds, ...kept.map((q) => q.id)];
+    }
     return this.ticketsRepository.save(ticket);
   }
 
@@ -118,6 +153,9 @@ export class TicketsService {
   }
 
   private async getQuestionsOrThrow(ids: string[]): Promise<Question[]> {
+    if (!ids.length) {
+      return [];
+    }
     const questions = await this.questionsRepository.find({
       where: { id: In(ids) },
     });

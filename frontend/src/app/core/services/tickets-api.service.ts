@@ -30,6 +30,29 @@ export class TicketsApiService {
       .pipe(map((t) => this.withAbsoluteImageUrls(t)));
   }
 
+  // ---------- Admin panel (superadmin) ----------
+
+  /** Barcha biletlar, faol savoli yo'qlari ham. */
+  adminList(): Observable<TicketSummary[]> {
+    return this.http.get<TicketSummary[]>(`${this.baseUrl}/admin`);
+  }
+
+  adminFindOne(id: string): Observable<Ticket> {
+    return this.http.get<Ticket>(`${this.baseUrl}/admin/${id}`).pipe(map((t) => this.withAbsoluteImageUrls(t)));
+  }
+
+  create(payload: { number: number; questionIds: string[] }): Observable<unknown> {
+    return this.http.post(this.baseUrl, payload);
+  }
+
+  update(id: string, payload: { number: number; questionIds: string[] }): Observable<unknown> {
+    return this.http.patch(`${this.baseUrl}/${id}`, payload);
+  }
+
+  remove(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+
   private withAbsoluteImageUrls(ticket: Ticket): Ticket {
     return { ...ticket, questions: ticket.questions.map(withAbsoluteMedia) };
   }

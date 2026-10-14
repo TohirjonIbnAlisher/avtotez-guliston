@@ -32,6 +32,12 @@ const SUPERADMIN_SECTIONS: AdminSection[] = [
     route: '/admin/topics',
   },
   {
+    icon: '🎫',
+    title: 'Biletlar',
+    description: "Biletlarni qo'shish, tahrirlash va savollarni biriktirish",
+    route: '/admin/tickets',
+  },
+  {
     icon: '❓',
     title: 'Savollar',
     description: "Savollarni qo'shish, tahrirlash va o'chirish",
