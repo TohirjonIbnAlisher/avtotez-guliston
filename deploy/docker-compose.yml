@@ -2,7 +2,12 @@
 #
 #   db   — PostgreSQL (faqat ichki tarmoqda, port tashqariga ochilmaydi)
 #   api  — NestJS backend (api.avtotez.uz)
-#   web  — Caddy: frontend statik fayllari (avtotez.uz) + api uchun reverse proxy + avtomatik HTTPS
+#
+# 80/443 portlarni bu stack EGALLAMAYDI: serverda boshqa loyihalar ham bor va ularni
+# serverning o'zidagi umumiy Caddy (systemd) xizmat qiladi. Bizning domenlar o'sha Caddy'ga
+# deploy/Caddyfile orqali ulanadi (/etc/caddy/Caddyfile ichida `import` qatori) — frontend
+# statik fayllarini Caddy to'g'ridan-to'g'ri diskdan beradi, api esa 127.0.0.1:3010 ga proksi
+# (port band bo'lsa: .env da API_PORT=... va deploy/Caddyfile dagi portni birga o'zgartiring).
 #
 # Maxfiy qiymatlar deploy/.env faylida (git'ga kirmaydi), namuna: .env.example
 name: avtotez
@@ -40,23 +45,9 @@ services:
       - ../data:/app/data:ro
       # rasmlar, videolar va foydalanuvchi avatarlari — serverning diskida doimiy saqlanadi
       - ../backend/public:/app/backend/public
-
-  web:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    depends_on:
-      - api
+    # faqat localhost'da — tashqaridan emas, serverdagi Caddy orqali kiriladi
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ../frontend/dist/frontend/browser:/srv/web:ro
-      - caddy_data:/data
-      - caddy_config:/config
+      - "127.0.0.1:${API_PORT:-3010}:3000"
 
 volumes:
   pgdata:
-  caddy_data:
-  caddy_config:

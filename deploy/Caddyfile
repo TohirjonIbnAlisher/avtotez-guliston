@@ -1,8 +1,14 @@
-# Caddy HTTPS sertifikatlarni (Let's Encrypt) o'zi oladi va yangilab turadi.
+# avtotez.uz saytlari — serverdagi UMUMIY Caddy (systemd) uchun. Bu fayl to'liq Caddyfile emas,
+# faqat bizning sayt bloklari; /etc/caddy/Caddyfile oxiriga bir marta shu qator qo'shiladi:
+#
+#   import /opt/avtotez/app/deploy/Caddyfile
+#
+# Boshqa loyihalarning bloklariga tegilmaydi. HTTPS sertifikatlarni Caddy o'zi oladi.
+# deploy.sh har deployda konfiguratsiyani tekshirib, Caddy'ni uzilishsiz qayta yuklaydi (reload).
 
 avtotez.uz {
 	encode zstd gzip
-	root * /srv/web
+	root * /opt/avtotez/app/frontend/dist/frontend/browser
 
 	# Angular build fayllari nomida xesh bor — uzoq keshlash mumkin; index.html esa doim yangisi
 	@hashed path_regexp \.[0-9a-zA-Z]{8,}\.(js|css)$
@@ -20,5 +26,6 @@ www.avtotez.uz {
 
 api.avtotez.uz {
 	encode zstd gzip
-	reverse_proxy api:3000
+	# docker-compose.yml dagi api porti (127.0.0.1:${API_PORT:-3010})
+	reverse_proxy 127.0.0.1:3010
 }
