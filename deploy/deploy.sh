@@ -2,8 +2,8 @@
 # avtotez.uz ni yangilash: serverda /opt/avtotez/app/deploy ichida ishga tushiriladi.
 #   ./deploy.sh
 # 1) master'dan oxirgi kodni oladi, 2) frontendni (avtotez konfiguratsiyasi) yig'adi,
-# 3) backendni qayta yig'ib konteynerlarni yangilaydi, 4) serverdagi umumiy Caddy'ni reload qiladi.
-# Baza va yuklangan fayllarga tegilmaydi. 80/443 portlarni bu stack egallamaydi (qarang: Caddyfile).
+# 3) backendni qayta yig'ib konteynerlarni yangilaydi. Baza va yuklangan fayllarga tegilmaydi.
+# 80/443 ni umumiy proxy-caddy (/opt/proxy) ushlaydi — unga bu skript tegmaydi (qarang: docker-compose.yml).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -19,10 +19,3 @@ echo "==> Backend + konteynerlar"
 docker compose up -d --build --remove-orphans
 docker compose ps
 
-echo "==> Umumiy Caddy (reload)"
-if grep -qs "import /opt/avtotez/app/deploy/Caddyfile" /etc/caddy/Caddyfile; then
-  # validate xato bersa reload qilinmaydi — boshqa saytlar eski (ishlayotgan) konfiguratsiyada qoladi
-  caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile && systemctl reload caddy
-else
-  echo "DIQQAT: /etc/caddy/Caddyfile da 'import /opt/avtotez/app/deploy/Caddyfile' qatori yo'q — avtotez domenlari ulanmagan." >&2
-fi

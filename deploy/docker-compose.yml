@@ -3,11 +3,11 @@
 #   db   — PostgreSQL (faqat ichki tarmoqda, port tashqariga ochilmaydi)
 #   api  — NestJS backend (api.avtotez.uz)
 #
-# 80/443 portlarni bu stack EGALLAMAYDI: serverda boshqa loyihalar ham bor va ularni
-# serverning o'zidagi umumiy Caddy (systemd) xizmat qiladi. Bizning domenlar o'sha Caddy'ga
-# deploy/Caddyfile orqali ulanadi (/etc/caddy/Caddyfile ichida `import` qatori) — frontend
-# statik fayllarini Caddy to'g'ridan-to'g'ri diskdan beradi, api esa 127.0.0.1:3010 ga proksi
-# (port band bo'lsa: .env da API_PORT=... va deploy/Caddyfile dagi portni birga o'zgartiring).
+# 80/443 portlarni bu stack EGALLAMAYDI: serverda boshqa loyihalar ham bor, hammasini umumiy
+# `proxy-caddy` konteyneri (/opt/proxy, Docker tarmog'i `proxy`) xizmat qiladi. Bizning sayt
+# sozlamasi o'sha yerda: /opt/proxy/sites/avtotez.caddy (nusxasi: deploy/Caddyfile).
+#   - frontend: proxy-caddy /opt/avtotez/app/frontend ni /srv/avtotez sifatida o'zi o'qiydi
+#   - api: `proxy` tarmog'ida `avtotez-api:3000` nomi bilan ko'rinadi
 #
 # Maxfiy qiymatlar deploy/.env faylida (git'ga kirmaydi), namuna: .env.example
 name: avtotez
@@ -45,9 +45,15 @@ services:
       - ../data:/app/data:ro
       # rasmlar, videolar va foydalanuvchi avatarlari — serverning diskida doimiy saqlanadi
       - ../backend/public:/app/backend/public
-    # faqat localhost'da — tashqaridan emas, serverdagi Caddy orqali kiriladi
-    ports:
-      - "127.0.0.1:${API_PORT:-3010}:3000"
+    networks:
+      default:
+      proxy:
+        aliases:
+          - avtotez-api
 
 volumes:
   pgdata:
+
+networks:
+  proxy:
+    external: true

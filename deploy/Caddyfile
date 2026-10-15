@@ -1,21 +1,17 @@
-# avtotez.uz saytlari — serverdagi UMUMIY Caddy (systemd) uchun. Bu fayl to'liq Caddyfile emas,
-# faqat bizning sayt bloklari; /etc/caddy/Caddyfile oxiriga bir marta shu qator qo'shiladi:
-#
-#   import /opt/avtotez/app/deploy/Caddyfile
-#
-# Boshqa loyihalarning bloklariga tegilmaydi. HTTPS sertifikatlarni Caddy o'zi oladi.
-# deploy.sh har deployda konfiguratsiyani tekshirib, Caddy'ni uzilishsiz qayta yuklaydi (reload).
+# NUSXA — haqiqiy fayl serverda: /opt/proxy/sites/avtotez.caddy (umumiy proxy-caddy o'qiydi).
+# Bu yerda o'zgartirish serverga o'zi o'tmaydi: kerak bo'lsa o'sha faylni tahrirlab,
+#   docker exec proxy-caddy caddy reload --config /etc/caddy/Caddyfile
+# bilan qayta yuklang. /opt/proxy boshqa dasturchiga tegishli — o'zgartirishni u bilan kelishing.
 
 avtotez.uz {
 	encode zstd gzip
-	root * /opt/avtotez/app/frontend/dist/frontend/browser
+	root * /srv/avtotez/dist/frontend/browser
 
 	# Angular build fayllari nomida xesh bor — uzoq keshlash mumkin; index.html esa doim yangisi
 	@hashed path_regexp \.[0-9a-zA-Z]{8,}\.(js|css)$
 	header @hashed Cache-Control "public, max-age=31536000, immutable"
 	header /index.html Cache-Control "no-cache"
 
-	# SPA: mavjud bo'lmagan yo'llar index.html ga (Angular router hal qiladi)
 	try_files {path} /index.html
 	file_server
 }
@@ -26,6 +22,5 @@ www.avtotez.uz {
 
 api.avtotez.uz {
 	encode zstd gzip
-	# docker-compose.yml dagi api porti (127.0.0.1:${API_PORT:-3010})
-	reverse_proxy 127.0.0.1:3010
+	reverse_proxy avtotez-api:3000
 }
