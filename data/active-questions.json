@@ -1,0 +1,4 @@
+{
+  "_izoh": "Saytda qaysi savollar faol (ko'rinadigan) bo'lishi. mode: \"ptest\" — faqat ptest.uz mavzulari va biletlaridagi savollar (topic-order-keys.json, tickets.json, custom-questions.json); \"all\" — barcha savollar. Deploy paytida release-seed avtomatik qo'llaydi.",
+  "mode": "ptest"
+}

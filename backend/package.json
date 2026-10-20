@@ -13,6 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/database/release-seed && node dist/main",
     "questions:keep-one-per-topic": "ts-node -r tsconfig-paths/register src/database/keep-one-per-topic.ts",
+    "questions:apply-active": "ts-node -r tsconfig-paths/register src/database/apply-active-questions.ts",
     "i18n:translate-missing": "ts-node -r tsconfig-paths/register src/database/translate-missing.ts",
     "seed:release": "ts-node -r tsconfig-paths/register src/database/release-seed.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",

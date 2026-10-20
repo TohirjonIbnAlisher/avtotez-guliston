@@ -22,14 +22,17 @@ const DATA_FILES = [
   'custom-questions.json',
   'tickets.json',
   'question-videos.json',
+  'active-questions.json',
 ];
 const STATE_KEY = 'data-seed-hash';
 
-// Ishga tushirish tartibi muhim: avval mavzular, keyin savollar, oxirida biletlar.
+// Ishga tushirish tartibi muhim: avval mavzular, keyin savollar, biletlar, oxirida savollar faolligi.
 const STEPS: { script: string; args: string[] }[] = [
   { script: 'assign-topics', args: ['--prune'] },
   { script: 'seed-custom-questions', args: [] },
   { script: 'seed-tickets', args: [] },
+  // oxirida: yangi qo'shilgan savollarning ham faolligi active-questions.json bo'yicha o'rnatiladi
+  { script: 'apply-active-questions', args: [] },
 ];
 
 function dataHash(): string {
