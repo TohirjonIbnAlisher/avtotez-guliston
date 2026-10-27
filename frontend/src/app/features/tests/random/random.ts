@@ -4,7 +4,8 @@ import { Question } from '../../../core/models/question.model';
 import { TranslateService } from '../../../core/services/translate.service';
 import { TestSession } from '../test-session/test-session';
 
-const COUNT_OPTIONS = [20, 30, 40, 50];
+// ptest.uz "Sozlamali testlar" bilan bir xil variantlar
+const COUNT_OPTIONS = [20, 40, 50, 80, 100, 120, 200, 400, 500, 600, 800, 1000];
 
 @Component({
   selector: 'app-random-test',

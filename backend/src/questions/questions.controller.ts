@@ -30,6 +30,7 @@ import { SuperAdminGuard } from '../auth/superadmin.guard';
 
 const IMAGE_MIME_PATTERN = /^image\/(png|jpe?g|webp|gif)$/;
 const VIDEO_MIME_PATTERN = /^video\/(mp4|webm)$/;
+const MAX_RANDOM_COUNT = 1000;
 
 @Controller('questions')
 export class QuestionsController {
@@ -124,7 +125,9 @@ export class QuestionsController {
     @Query('count', new ParseIntPipe({ optional: true })) count?: number,
     @Query('lang') lang?: string,
   ) {
-    return this.questionsService.findRandom(count, this.parseLocale(lang));
+    // Frontend 20–1000 oralig'idagi variantlarni taklif qiladi (ptest.uz "Sozlamali testlar")
+    const limited = count === undefined ? undefined : Math.min(Math.max(count, 1), MAX_RANDOM_COUNT);
+    return this.questionsService.findRandom(limited, this.parseLocale(lang));
   }
 
   @Get(':id')

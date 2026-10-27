@@ -57,6 +57,7 @@ export class TestSession {
   readonly sessionEnded = signal(false);
   readonly imageOpen = signal(false);
   readonly resultsOpen = signal(false);
+  readonly isFullscreen = signal(false);
 
   private advanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private readonly intervalId: ReturnType<typeof setInterval>;
@@ -104,9 +105,11 @@ export class TestSession {
 
   readonly timeDisplay = computed(() => {
     const secs = this.displaySeconds();
-    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60).toString().padStart(2, '0');
     const s = Math.floor(secs % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
+    // Katta testlarda (masalan, 1000 ta savol) vaqt soatlarda o'lchanadi
+    return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
   });
 
   readonly passThreshold = computed(() => Math.ceil(this.questions().length * PASS_RATIO));
@@ -157,7 +160,14 @@ export class TestSession {
       }
     }, 1000);
 
+    const onFullscreenChange = () => this.isFullscreen.set(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+
     this.destroyRef.onDestroy(() => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      if (document.fullscreenElement) {
+        void document.exitFullscreen();
+      }
       clearInterval(this.intervalId);
       if (this.advanceTimeoutId) {
         clearTimeout(this.advanceTimeoutId);
@@ -216,7 +226,16 @@ export class TestSession {
     return (answer === question.correctOptionIndex ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white') + ring;
   }
 
-  // F1–F9 yoki 1–9 — variantni tanlash, Enter / → — keyingi savol, ← — oldingi, Esc — rasmni yopish.
+  toggleFullscreen(): void {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void document.documentElement.requestFullscreen?.().catch(() => undefined);
+    }
+  }
+
+  // F1–F9 yoki 1–9 — variantni tanlash, → / ← — keyingi / oldingi savol (javob berilmagan bo'lsa ham),
+  // Enter — javobdan keyin keyingi savol, Esc — rasmni yopish.
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
     if (this.sessionEnded() || event.ctrlKey || event.metaKey || event.altKey) {
@@ -241,12 +260,15 @@ export class TestSession {
       }
       return;
     }
-    if ((event.key === 'Enter' || event.key === 'ArrowRight') && this.isAnswered()) {
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+      event.preventDefault();
+      const index = this.currentIndex() + (event.key === 'ArrowRight' ? 1 : -1);
+      if (index >= 0 && index < this.questions().length) {
+        this.goTo(index);
+      }
+    } else if (event.key === 'Enter' && this.isAnswered()) {
       event.preventDefault();
       this.next();
-    } else if (event.key === 'ArrowLeft' && this.currentIndex() > 0) {
-      event.preventDefault();
-      this.goTo(this.currentIndex() - 1);
     }
   }
 
