@@ -27,7 +27,7 @@
     <select
       [value]="topicFilter()"
       (change)="topicFilter.set($any($event.target).value)"
-      class="rounded-xl border-2 border-slate-200 px-4 py-2.5 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+      class="w-full max-w-full rounded-xl border-2 border-slate-200 px-4 py-2.5 sm:w-auto sm:max-w-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
     >
       <option value="">Barcha mavzular</option>
       @for (topic of topics(); track topic.id) {

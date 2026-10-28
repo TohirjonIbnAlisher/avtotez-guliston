@@ -1,20 +1,22 @@
 @if (!sessionEnded() || finishButton()) {
-  <div class="animate-fade-in-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-    <div class="flex flex-wrap items-center justify-between gap-3">
+  <!-- Telefonda karta aniq bitta ekranni egallaydi: rasm qolgan joyni to'ldiradi, pastga surish kerak bo'lmaydi -->
+  <div class="animate-fade-in-up rounded-xl border border-slate-200 bg-white p-3 shadow-sm max-sm:flex max-sm:h-[calc(100dvh-78px-env(safe-area-inset-bottom))] max-sm:flex-col sm:rounded-2xl sm:p-8 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+    <div class="flex shrink-0 flex-wrap items-center justify-between gap-1.5 sm:gap-3">
       @if (title()) {
-        <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ title() }}</h2>
+        <h2 class="truncate text-sm font-bold short:hidden text-slate-900 sm:text-xl dark:text-white">{{ title() }}</h2>
       }
-      <div class="ml-auto flex flex-wrap items-center gap-3">
+      <div class="flex w-full items-center justify-between gap-1.5 sm:ml-auto sm:w-auto sm:flex-wrap sm:justify-start sm:gap-3">
         <div
-          class="flex items-center gap-2 rounded-lg bg-slate-100 py-1 pr-1 pl-3 text-sm font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          class="flex items-center gap-2 rounded-lg bg-slate-100 py-1 pr-1 pl-2 text-sm font-semibold text-slate-600 sm:pl-3 dark:bg-slate-800 dark:text-slate-300"
           [title]="translate.t('testRunner.autoAdvanceHint')"
         >
-          <span>{{ translate.t('testRunner.autoAdvance') }}</span>
+          <span class="sm:hidden" aria-hidden="true">⏩</span>
+          <span class="hidden sm:inline">{{ translate.t('testRunner.autoAdvance') }}</span>
           <div class="flex rounded-md bg-white p-0.5 dark:bg-slate-900" role="radiogroup" [attr.aria-label]="translate.t('testRunner.autoAdvanceHint')">
             <button
               type="button"
               role="radio"
-              class="rounded px-2.5 py-0.5 transition"
+              class="rounded px-2 py-0.5 transition sm:px-2.5"
               [attr.aria-checked]="prefs.autoAdvance()"
               [class.bg-brand-600]="prefs.autoAdvance()"
               [class.text-white]="prefs.autoAdvance()"
@@ -25,7 +27,7 @@
             <button
               type="button"
               role="radio"
-              class="rounded px-2.5 py-0.5 transition"
+              class="rounded px-2 py-0.5 transition sm:px-2.5"
               [attr.aria-checked]="!prefs.autoAdvance()"
               [class.bg-slate-600]="!prefs.autoAdvance()"
               [class.text-white]="!prefs.autoAdvance()"
@@ -38,7 +40,8 @@
         @if (allowSave()) {
           <button
             type="button"
-            class="flex items-center gap-1.5 rounded-lg border-2 px-3 py-1.5 text-sm font-semibold transition"
+            class="flex items-center gap-1.5 rounded-lg border-2 px-2.5 py-1 text-sm font-semibold transition sm:px-3 sm:py-1.5"
+            [attr.aria-label]="isCurrentSaved() ? translate.t('common.saved') : translate.t('common.save')"
             [class.border-brand-600]="isCurrentSaved()"
             [class.text-brand-700]="isCurrentSaved()"
             [class.dark:text-brand-400]="isCurrentSaved()"
@@ -49,21 +52,24 @@
             (click)="toggleSave()"
           >
             {{ isCurrentSaved() ? '★' : '☆' }}
-            {{ isCurrentSaved() ? translate.t('common.saved') : translate.t('common.save') }}
+            <span class="hidden sm:inline">{{ isCurrentSaved() ? translate.t('common.saved') : translate.t('common.save') }}</span>
           </button>
         }
-        <span class="flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+        <span class="flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-sm font-semibold whitespace-nowrap text-slate-600 tabular-nums sm:gap-1.5 sm:px-3 sm:py-1.5 dark:bg-slate-800 dark:text-slate-300">
           🕐 {{ timeDisplay() }}
         </span>
-        <button
-          type="button"
-          class="flex items-center gap-1.5 rounded-lg border-2 border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-500 transition hover:border-brand-300 dark:border-slate-700 dark:text-slate-400"
-          [attr.aria-pressed]="isFullscreen()"
-          (click)="toggleFullscreen()"
-        >
-          {{ isFullscreen() ? '⤡' : '⛶' }}
-          {{ isFullscreen() ? translate.t('testRunner.exitFullscreen') : translate.t('testRunner.fullscreen') }}
-        </button>
+        @if (fullscreenSupported) {
+          <button
+            type="button"
+            class="flex items-center gap-1.5 rounded-lg border-2 border-slate-200 px-2.5 py-1 text-sm font-semibold text-slate-500 transition hover:border-brand-300 sm:px-3 sm:py-1.5 dark:border-slate-700 dark:text-slate-400"
+            [attr.aria-pressed]="isFullscreen()"
+            [attr.aria-label]="isFullscreen() ? translate.t('testRunner.exitFullscreen') : translate.t('testRunner.fullscreen')"
+            (click)="toggleFullscreen()"
+          >
+            {{ isFullscreen() ? '⤡' : '⛶' }}
+            <span class="hidden sm:inline">{{ isFullscreen() ? translate.t('testRunner.exitFullscreen') : translate.t('testRunner.fullscreen') }}</span>
+          </button>
+        }
         @if (finishButton()) {
           @if (!sessionEnded()) {
             <button
@@ -86,12 +92,13 @@
       </div>
     </div>
 
-    <div class="mt-4 flex flex-nowrap gap-2 overflow-x-auto p-1">
+    <div class="mt-2 flex shrink-0 flex-nowrap gap-1.5 overflow-x-auto p-1 [scrollbar-width:none] sm:mt-4 sm:gap-2 sm:[scrollbar-width:thin]">
       @for (q of questions(); track q.id; let i = $index) {
         <button
           type="button"
+          [id]="'qnav-' + i"
           (click)="goTo(i)"
-          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition"
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition short:h-7 short:w-7 short:text-xs sm:h-9 sm:w-9"
           [class]="navClass(q, i)"
         >
           {{ i + 1 }}
@@ -100,16 +107,21 @@
     </div>
 
     @if (currentQuestion(); as question) {
-      <div class="mt-6 grid gap-x-8 gap-y-5 lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr]">
-        <h3 class="text-xl font-bold text-slate-900 lg:col-start-1 dark:text-white">{{ question.text }}</h3>
+      <!-- telefonda barmoq bilan chapga/o'ngga surib keyingi/oldingi savolga o'tiladi -->
+      <div
+        class="mt-2 grid gap-x-8 gap-y-2.5 max-sm:flex max-sm:min-h-0 max-sm:flex-1 max-sm:flex-col max-sm:overflow-y-auto sm:mt-6 sm:gap-y-5 lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr]"
+        (touchstart)="onTouchStart($event)"
+        (touchend)="onTouchEnd($event)"
+      >
+        <h3 class="shrink-0 text-[15px] leading-snug font-bold short:text-sm text-slate-900 sm:text-xl lg:col-start-1 dark:text-white">{{ question.text }}</h3>
 
-        <div class="lg:col-start-2 lg:row-span-3 lg:row-start-1">
+        <div class="lg:col-start-2 lg:row-span-3 lg:row-start-1 max-sm:relative max-sm:min-h-[72px] max-sm:flex-1 short:min-h-[60px]">
           @if (isAnswered() && question.videoUrl) {
             <!-- Javob belgilangandan keyin — izoh-video (harakat tartibi) avtomatik boshlanadi -->
-            <div class="relative lg:sticky lg:top-24">
+            <div class="relative max-sm:absolute max-sm:inset-0 lg:sticky lg:top-24">
               <video
                 #explainVideo
-                class="w-full rounded-2xl bg-black"
+                class="w-full rounded-2xl bg-black max-sm:h-full max-sm:object-contain sm:max-h-[45vh] lg:max-h-none"
                 [src]="question.videoUrl"
                 [poster]="imageOf(question)"
                 autoplay
@@ -126,7 +138,7 @@
             </div>
           } @else {
             <img
-              class="w-full cursor-zoom-in rounded-2xl lg:sticky lg:top-24"
+              class="mx-auto w-auto max-w-full cursor-zoom-in rounded-2xl max-sm:absolute max-sm:inset-0 max-sm:h-full max-sm:w-full max-sm:object-contain sm:max-h-[45vh] lg:sticky lg:top-24 lg:max-h-none lg:w-full"
               [src]="imageOf(question)"
               alt=""
               (click)="openImage()"
@@ -134,12 +146,12 @@
           }
         </div>
 
-        <ul class="flex flex-col gap-2.5 lg:col-start-1">
+        <ul class="flex shrink-0 flex-col gap-1.5 short:gap-1 sm:gap-2.5 lg:col-start-1">
           @for (option of question.options; track $index) {
             <li>
               <button
                 type="button"
-                class="flex w-full items-center gap-3 rounded-xl border-2 px-3 py-3 text-left text-base font-medium transition-all duration-150"
+                class="flex w-full items-center gap-2.5 rounded-xl border-2 px-2.5 py-1.5 text-left text-sm leading-snug short:py-1 short:text-[13px] font-medium transition-all duration-150 sm:gap-3 sm:px-3 sm:py-3 sm:text-base"
                 [class.border-emerald-600]="optionState($index) === 'correct'"
                 [class.bg-emerald-50]="optionState($index) === 'correct'"
                 [class.text-emerald-800]="optionState($index) === 'correct'"
@@ -158,7 +170,7 @@
                 (click)="selectOption($index)"
               >
                 <span
-                  class="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-md px-1.5 text-xs font-bold"
+                  class="flex h-6 min-w-8 shrink-0 items-center justify-center rounded-md px-1 text-[11px] font-bold sm:h-7 sm:min-w-9 sm:px-1.5 sm:text-xs"
                   [class.bg-emerald-600]="optionState($index) === 'correct'"
                   [class.bg-red-600]="optionState($index) === 'wrong'"
                   [class.text-white]="optionState($index) !== 'neutral'"
@@ -178,30 +190,46 @@
           }
         </ul>
 
-        <div class="lg:col-start-1">
+        <!-- telefonda pastki tugmalar doim ko'rinsin (uzun savolda ham) -->
+        <div class="shrink-0 lg:col-start-1 max-sm:sticky max-sm:bottom-0 max-sm:bg-white max-sm:pt-1 max-sm:dark:bg-slate-900">
           @if (isAnswered() && question.explanation) {
-            <p class="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 italic dark:bg-slate-800/60 dark:text-slate-300">
+            <!-- telefonda izoh "Izoh" tugmasi bosilganda ochiladi (ptest'dagidek), kattaroq ekranda doim ochiq -->
+            <p
+              class="max-h-[30dvh] overflow-y-auto rounded-xl bg-slate-50 px-3 py-2 text-xs leading-snug text-slate-600 italic sm:block sm:max-h-none sm:px-4 sm:py-3 sm:text-sm dark:bg-slate-800/60 dark:text-slate-300"
+              [class.max-sm:hidden]="!explanationOpen()"
+            >
               {{ question.explanation }}
             </p>
           }
 
-          <div class="mt-6 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
+          <div class="mt-1.5 flex items-center justify-between gap-2 sm:mt-6 sm:gap-3">
+            <div class="flex items-center gap-2 sm:gap-3">
               @if (currentIndex() > 0) {
                 <button
                   type="button"
-                  class="rounded-xl border-2 border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-brand-300 dark:border-slate-700 dark:text-slate-300"
+                  class="rounded-xl border-2 border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-brand-300 sm:px-4 sm:py-2 sm:text-sm dark:border-slate-700 dark:text-slate-300"
+                  [attr.aria-label]="translate.t('testRunner.prevBtn')"
                   (click)="goTo(currentIndex() - 1)"
                 >
-                  ← {{ translate.t('testRunner.prevBtn') }}
+                  ← <span class="hidden sm:inline">{{ translate.t('testRunner.prevBtn') }}</span>
                 </button>
               }
-              <span class="text-sm text-slate-400 dark:text-slate-500">{{ currentIndex() + 1 }} / {{ questions().length }}</span>
+              @if (isAnswered() && question.explanation) {
+                <button
+                  type="button"
+                  class="flex items-center gap-1 rounded-lg border border-dashed border-emerald-600/60 px-2 py-1 text-xs font-semibold text-emerald-600 sm:hidden dark:text-emerald-400"
+                  [attr.aria-expanded]="explanationOpen()"
+                  (click)="explanationOpen.set(!explanationOpen())"
+                >
+                  ⓘ {{ explanationOpen() ? translate.t('testRunner.hideExplanation') : translate.t('testRunner.showExplanation') }}
+                </button>
+              }
+              <span class="text-xs whitespace-nowrap text-slate-400 sm:text-sm dark:text-slate-500">{{ currentIndex() + 1 }} / {{ questions().length }}</span>
             </div>
             @if (!isLastQuestion()) {
               <button
                 type="button"
-                class="btn-primary"
+                class="btn-primary max-sm:px-4 max-sm:py-2 max-sm:text-sm"
                 [disabled]="!isAnswered()"
                 (click)="next()"
               >
@@ -210,7 +238,7 @@
             } @else if (scored()) {
               <button
                 type="button"
-                class="btn-primary"
+                class="btn-primary max-sm:px-4 max-sm:py-2 max-sm:text-sm"
                 [disabled]="!isAnswered()"
                 (click)="next()"
               >

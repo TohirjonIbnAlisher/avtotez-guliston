@@ -58,6 +58,11 @@ export class TestSession {
   readonly imageOpen = signal(false);
   readonly resultsOpen = signal(false);
   readonly isFullscreen = signal(false);
+  /** Telefonda izoh tugma bosilgandagina ochiladi; har savolda yopiq holatdan boshlanadi. */
+  readonly explanationOpen = signal(false);
+  /** iPhone Safari kabi brauzerlarda sahifani to'liq ekranga chiqarib bo'lmaydi — tugma ko'rsatilmaydi. */
+  protected readonly fullscreenSupported = typeof document !== 'undefined' && document.fullscreenEnabled;
+  private touchStart: { x: number; y: number; time: number } | null = null;
 
   private advanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private readonly intervalId: ReturnType<typeof setInterval>;
@@ -160,11 +165,22 @@ export class TestSession {
       }
     }, 1000);
 
+    effect(() => {
+      const index = this.currentIndex();
+      queueMicrotask(() =>
+        document.getElementById(`qnav-${index}`)?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }),
+      );
+    });
+
+    // Telefonda test paytida pastki navigatsiya paneli yashiriladi (styles.css: body.test-active)
+    document.body.classList.add('test-active');
+
     const onFullscreenChange = () => this.isFullscreen.set(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', onFullscreenChange);
 
     this.destroyRef.onDestroy(() => {
       document.removeEventListener('fullscreenchange', onFullscreenChange);
+      document.body.classList.remove('test-active');
       if (document.fullscreenElement) {
         void document.exitFullscreen();
       }
@@ -178,7 +194,32 @@ export class TestSession {
   goTo(index: number): void {
     this.cancelAutoAdvance();
     this.imageOpen.set(false);
+    this.explanationOpen.set(false);
     this.currentIndex.set(index);
+  }
+
+  onTouchStart(event: TouchEvent): void {
+    const t = event.changedTouches[0];
+    this.touchStart = { x: t.clientX, y: t.clientY, time: Date.now() };
+  }
+
+  /** Tez va asosan gorizontal surish: chapga — keyingi savol, o'ngga — oldingi. */
+  onTouchEnd(event: TouchEvent): void {
+    const start = this.touchStart;
+    this.touchStart = null;
+    if (!start || this.imageOpen()) {
+      return;
+    }
+    const t = event.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5 || Date.now() - start.time > 600) {
+      return;
+    }
+    const index = this.currentIndex() + (dx < 0 ? 1 : -1);
+    if (index >= 0 && index < this.questions().length) {
+      this.goTo(index);
+    }
   }
 
   openImage(): void {
@@ -311,6 +352,7 @@ export class TestSession {
   next(): void {
     this.cancelAutoAdvance();
     this.imageOpen.set(false);
+    this.explanationOpen.set(false);
     if (this.isLastQuestion()) {
       if (this.scored()) {
         this.finish();

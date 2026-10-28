@@ -1,6 +1,25 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+/* Past (kichik) telefon ekranlari — test sahifasi yanada ixcham */
+@custom-variant short (@media (width < 40rem) and (height < 700px));
+
+/* Telefonda dekorativ elementlar (masalan, bosh sahifadagi "blob"lar) sahifani yon tomonga surmasin.
+   clip — hidden'dan farqli, sticky sarlavhani buzmaydi. */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* Telefonda test yechilayotganda pastki navigatsiya paneli yashiriladi — savol uchun ko'proq joy */
+@media (width < 40rem) {
+  body.test-active [data-bottom-nav] {
+    display: none;
+  }
+  body.test-active main {
+    padding-bottom: 0 !important;
+  }
+}
 
 @theme {
   --color-brand-50: #f0fdf4;
